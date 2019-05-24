@@ -1,0 +1,15 @@
+html {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	display: grid;
+	height: 100%;
+	margin: 0 1em;
+	grid-template-rows: min-content 1fr min-content;
+}
+
+header, footer {
+	text-align: center;
+}
