@@ -13,3 +13,75 @@ body {
 header, footer {
 	text-align: center;
 }
+
+:root {
+	--background-color-red-default: 12;
+	--background-color-green-default: 12;
+	--background-color-blue-default: 12;
+
+	--color-red-default: 255;
+	--color-green-default: 255;
+	--color-blue-default: 255;
+
+	--a-color-red-default: 255;
+	--a-color-green-default: 255;
+	--a-color-blue-default: 0;
+
+	--a-visited-color-red-default: 255;
+	--a-visited-color-green-default: 128;
+	--a-visited-color-blue-default: 0;
+}
+
+/* Dark mode is default for browsers that don't support prefers-color-scheme */
+/* @media (prefers-color-scheme: dark) { */
+	:root {
+		--background-color-red: var(--background-color-red-default);
+		--background-color-green: var(--background-color-green-default);
+		--background-color-blue: var(--background-color-blue-default);
+
+		--color-red: var(--color-red-default);
+		--color-green: var(--color-green-default);
+		--color-blue: var(--color-blue-default);
+
+		--a-color-red: var(--a-color-red-default);
+		--a-color-green: var(--a-color-green-default);
+		--a-color-blue: var(--a-color-blue-default);
+
+		--a-visited-color-red: var(--a-visited-color-red-default);
+		--a-visited-color-green: var(--a-visited-color-green-default);
+		--a-visited-color-blue: var(--a-visited-color-blue-default);
+	}
+/* } */
+
+@media (prefers-color-scheme: light) {
+	:root {
+		--background-color-red: calc(255 - var(--background-color-red-default));
+		--background-color-green: calc(255 - var(--background-color-green-default));
+		--background-color-blue: calc(255 - var(--background-color-blue-default));
+
+		--color-red: calc(255 - var(--color-red-default));
+		--color-green: calc(255 - var(--color-green-default));
+		--color-blue: calc(255 - var(--color-blue-default));
+
+		--a-color-red: calc(255 - var(--a-color-red-default));
+		--a-color-green: calc(255 - var(--a-color-green-default));
+		--a-color-blue: calc(255 - var(--a-color-blue-default));
+
+		--a-visited-color-red: calc(255 - var(--a-visited-color-red-default));
+		--a-visited-color-green: calc(255 - var(--a-visited-color-green-default));
+		--a-visited-color-blue: calc(255 - var(--a-visited-color-blue-default));
+	}
+}
+
+body {
+	background-color: rgb(var(--background-color-red), var(--background-color-green), var(--background-color-blue));
+	color: rgb(var(--color-red), var(--color-green), var(--color-blue));
+}
+
+a, a:hover {
+	color: rgb(var(--a-color-red), var(--a-color-green), var(--a-color-blue));
+}
+
+a:visited {
+	color: rgb(var(--a-visited-color-red), var(--a-visited-color-green), var(--a-visited-color-blue));
+}
