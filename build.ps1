@@ -5,6 +5,57 @@ $ErrorActionPreference = 'Stop'
 if (Test-Path "$PWD/web") {
 	Remove-Item -Recurse -Force "$PWD/web"
 }
+New-Item -Type Directory "$PWD/web"
+
+
+# Write blog's Atom feed
+
+New-Item -Type Directory "$PWD/web/blog"
+$feedFile = [System.IO.FileStream]::new("$PWD/web/blog/atom.xml", [System.IO.FileMode]::Create)
+$feedWriterSettings = [System.Xml.XmlWriterSettings]::new()
+$feedWriterSettings.Indent = $true
+$feedWriterSettings.IndentChars = "`t"
+$feedWriter = [System.Xml.XmlWriter]::Create($feedFile, $feedWriterSettings)
+
+$feed = [System.ServiceModel.Syndication.SyndicationFeed]::new()
+$feed.Id = 'https://www.arnavion.dev/blog/atom.xml'
+$feed.Title = 'Arnavion''s Blog'
+
+$feedLink = [System.ServiceModel.Syndication.SyndicationLink]::new('https://www.arnavion.dev/blog/atom.xml')
+$feedLink.RelationshipType
+$feedLink.RelationshipType = 'self'
+$feed.Links.Add($feedLink)
+
+$author = [System.ServiceModel.Syndication.SyndicationPerson]::new()
+$author.Name = 'Arnavion'
+$feed.Authors.Add($author)
+
+Get-ChildItem -Directory "$PWD/src/blog" | %{
+	$item =
+		[System.ServiceModel.Syndication.SyndicationItem]::new(
+			(Get-Content -Raw "$($_.FullName)/title").Trim(),
+			'',
+			"https://www.arnavion.dev/blog/$($_.Name)/"
+		)
+	$item.Id = $item.Links[0].Uri
+	$item.PublishDate = $item.LastUpdatedTime =
+		[System.DateTime]::SpecifyKind(
+			[System.DateTime]::ParseExact(
+				$_.Name.Substring(0, 'yyyy-MM-dd'.Length),
+				'yyyy-MM-dd',
+				[System.Globalization.CultureInfo]::InvariantCulture
+			),
+			[System.DateTimeKind]::Utc
+		)
+	$feed.Items.Add($item)
+}
+
+$feed.SaveAsAtom10($feedWriter)
+
+$feedWriter.Close()
+
+
+# Generate XHTML pages
 
 for (;;) {
 	$directory = $directories.First.Value
@@ -16,7 +67,9 @@ for (;;) {
 
 	$outputDirectory = "$($directory -replace '^src', 'web')"
 
-	New-Item -Type Directory "$PWD/$outputDirectory"
+	if (-not (Test-Path "$PWD/$outputDirectory")) {
+		New-Item -Type Directory "$PWD/$outputDirectory"
+	}
 
 	$content = @"
 <?xml version="1.0" encoding="utf-8" ?>
@@ -37,6 +90,13 @@ for (;;) {
 	foreach ($cssUrl in $cssUrls) {
 		$content += @"
 		<link rel="stylesheet" href="$cssUrl" />
+
+"@
+	}
+
+	if (Test-Path "$PWD/$outputDirectory/atom.xml") {
+		$content += @"
+		<link rel="alternative" href="./atom.xml" type="application/atom+xml" />
 
 "@
 	}
