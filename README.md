@@ -10,10 +10,10 @@ pwsh ./build.ps1
 # Deploy
 
 ```sh
-AZURE_RESOURCE_GROUP_NAME='website'
-AZURE_STORAGE_ACCOUNT_NAME='arnaviondotdev'
-AZURE_CDN_PROFILE_NAME='arnaviondotdev'
-AZURE_CDN_ENDPOINT_NAME='arnaviondotdev'
+AZURE_RESOURCE_GROUP_NAME='www-arnavion-dev'
+AZURE_STORAGE_ACCOUNT_NAME='wwwarnaviondev'
+AZURE_CDN_PROFILE_NAME='www-arnavion-dev'
+AZURE_CDN_ENDPOINT_NAME='www-arnavion-dev'
 
 AZURE_STORAGE_ACCOUNT_CONNECTION_STRING="$(
     az storage account show-connection-string \
