@@ -5,6 +5,7 @@ html {
 
 body {
 	display: grid;
+	font-size: large;
 	height: 100%;
 	margin: 0 1em;
 	grid-template-rows: min-content 1fr min-content;
@@ -15,9 +16,9 @@ header, footer {
 }
 
 :root {
-	--background-color-red-default: 12;
-	--background-color-green-default: 12;
-	--background-color-blue-default: 12;
+	--background-color-red-default: 25;
+	--background-color-green-default: 25;
+	--background-color-blue-default: 25;
 
 	--color-red-default: 255;
 	--color-green-default: 255;
@@ -30,6 +31,10 @@ header, footer {
 	--a-visited-color-red-default: 255;
 	--a-visited-color-green-default: 128;
 	--a-visited-color-blue-default: 0;
+
+	--border-color-red-default: 255;
+	--border-color-green-default: 255;
+	--border-color-blue-default: 255;
 }
 
 /* Dark mode is default for browsers that don't support prefers-color-scheme */
@@ -50,6 +55,10 @@ header, footer {
 		--a-visited-color-red: var(--a-visited-color-red-default);
 		--a-visited-color-green: var(--a-visited-color-green-default);
 		--a-visited-color-blue: var(--a-visited-color-blue-default);
+
+		--border-color-red: var(--border-color-red-default);
+		--border-color-green: var(--border-color-green-default);
+		--border-color-blue: var(--border-color-blue-default);
 	}
 /* } */
 
@@ -70,6 +79,10 @@ header, footer {
 		--a-visited-color-red: calc(255 - var(--a-visited-color-red-default));
 		--a-visited-color-green: calc(255 - var(--a-visited-color-green-default));
 		--a-visited-color-blue: calc(255 - var(--a-visited-color-blue-default));
+
+		--border-color-red: calc(255 - var(--border-color-red-default));
+		--border-color-green: calc(255 - var(--border-color-green-default));
+		--border-color-blue: calc(255 - var(--border-color-blue-default));
 	}
 }
 
@@ -84,4 +97,8 @@ a, a:hover {
 
 a:visited {
 	color: rgb(var(--a-visited-color-red), var(--a-visited-color-green), var(--a-visited-color-blue));
+}
+
+footer {
+	border-top: 1px solid rgb(var(--border-color-red), var(--border-color-green), var(--border-color-blue));
 }
