@@ -47,7 +47,7 @@ Get-ChildItem -Directory "$PWD/src/blog" | %{
 			),
 			[System.DateTimeKind]::Utc
 		)
-	$feed.Items.Add($item)
+	$feed.Items.Insert(0, $item)
 }
 
 $feed.SaveAsAtom10($feedWriter)
