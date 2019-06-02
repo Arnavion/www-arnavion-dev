@@ -1,0 +1,25 @@
+<html lang="en">
+	<head>
+		<title>{{ .Title }} - arnavion.dev</title>
+		{{ $style := resources.Get "index.scss" | resources.ToCSS }}
+		<link rel="stylesheet" href="{{ $style.Permalink }}" />
+		{{ block "rss" . }}{{ end }}
+	</head>
+	<body>
+		<header>
+			<h1>{{ .Title }}</h1>
+		</header>
+
+		<main>
+			{{ block "content" . }}{{ end }}
+		</main>
+
+		<footer>
+			<p>
+				Copyright Arnav Singh,
+				under the <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>
+			</p>
+			<p>Source at <a href="https://github.com/Arnavion/www-arnavion-dev">https://github.com/Arnavion/www-arnavion-dev</a></p>
+		</footer>
+	</body>
+</html>

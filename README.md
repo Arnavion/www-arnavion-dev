@@ -3,8 +3,10 @@ Source of <https://www.arnavion.dev/>
 
 # Build
 
+Install hugo extended.
+
 ```sh
-rm -rf ./public/
+rm -rf ./public/ ./resources/
 hugo
 ```
 

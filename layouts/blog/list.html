@@ -1,30 +1,22 @@
-<html lang="en">
-	<head>
-		<title>{{ .Title }} - arnavion.dev</title>
-		<link rel="stylesheet" href="/index.css" />
-		{{ with .OutputFormats.Get "rss" }}
-			<link rel="{{ .Rel }}" type="{{ .MediaType.Type }}" href="{{ .Permalink }}" title="{{ $.Site.Title }}" />
-		{{ end }}
-	</head>
-	<body>
-		{{ partial "header.html" . }}
+{{ define "rss" }}
+	{{ with .OutputFormats.Get "rss" }}
+		<link rel="{{ .Rel }}" type="{{ .MediaType.Type }}" href="{{ .Permalink }}" title="{{ $.Site.Title }}" />
+	{{ end }}
+{{ end }}
 
-		<main>
-			<nav>
-				<a href="{{ .Parent.Permalink }}">Back to Home</a>
-			</nav>
 
-			<nav>
-				<h2>Articles</h2>
+{{ define "content" }}
+	<nav>
+		<a href="{{ .Parent.Permalink }}">Back to Home</a>
+	</nav>
 
-				<ul>
-					{{ range .Pages.ByDate.Reverse }}
-						<li><a href="{{ .Permalink }}">{{ .Title }}</a></li>
-					{{ end }}
-				</ul>
-			</nav>
-		</main>
+	<nav>
+		<h2>Articles</h2>
 
-		{{ partial "footer.html" . }}
-	</body>
-</html>
+		<ul>
+			{{ range .Pages.ByDate.Reverse }}
+				<li><a href="{{ .Permalink }}">{{ .Title }}</a></li>
+			{{ end }}
+		</ul>
+	</nav>
+{{ end }}

@@ -1,0 +1,80 @@
+$background-color: #222222;
+$color: #dddddd;
+$a-color: #ee9900;
+$border-color: #ffffff;
+$code-background-color: #333333;
+
+/* Dark mode is default for browsers that don't support prefers-color-scheme */
+:root {
+	--background-color: #{$background-color};
+	--color: #{$color};
+	--a-color: #{$a-color};
+	--border-color: #{$border-color};
+	--code-background-color: #{$code-background-color};
+
+	@media (prefers-color-scheme: light) {
+		--background-color: #{invert($background-color)};
+		--color: #{invert($color)};
+		--a-color: #{invert($a-color)};
+		--border-color: #{invert($border-color)};
+		--code-background-color: #{invert($code-background-color)};
+	}
+}
+
+html {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	display: grid;
+	font-size: large;
+	height: 100%;
+	margin: 0 1em;
+	grid-template-rows: min-content 1fr min-content;
+}
+
+header, footer {
+	text-align: center;
+}
+
+body {
+	background-color: var(--background-color);
+	color: var(--color);
+}
+
+a, a:hover, a:visited {
+	color: var(--a-color);
+}
+
+footer {
+	border-color: var(--border-color);
+	border-top-width: 1px;
+	border-top-style: solid;
+}
+
+footer.blog-comments {
+	text-align: left;
+}
+
+pre, code {
+	background-color: var(--code-background-color);
+}
+
+pre {
+	padding: 1em;
+}
+
+code {
+	padding: 0 1em;
+	white-space: pre;
+}
+
+pre > code {
+	padding: 0;
+}
+
+section {
+	margin-left: 2em;
+	text-align: justify;
+}
