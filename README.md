@@ -1,9 +1,11 @@
 Source of <https://www.arnavion.dev/>
 
+
 # Build
 
 ```sh
-pwsh ./build.ps1
+rm -rf ./public/
+hugo
 ```
 
 
@@ -28,7 +30,7 @@ az storage blob delete-batch \
 
 az storage blob upload-batch \
     --connection-string "$AZURE_STORAGE_ACCOUNT_CONNECTION_STRING" \
-    --source "$PWD/web" --destination '$web' --type block \
+    --source "$PWD/public" --destination '$web' --type block \
     --verbose
 
 az cdn endpoint purge \

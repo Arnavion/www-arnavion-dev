@@ -1,0 +1,4 @@
+baseURL = "https://www.arnavion.dev/"
+languageCode = "en-us"
+title = "www.arnavion.dev"
+disableKinds = ["sitemap", "taxonomy", "taxonomyTerm"]

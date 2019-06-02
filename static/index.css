@@ -115,6 +115,10 @@ footer {
 	border-top: 1px solid rgb(var(--border-color-red), var(--border-color-green), var(--border-color-blue));
 }
 
+footer.blog-comments {
+	text-align: left;
+}
+
 pre, code {
 	background-color: rgb(var(--code-background-color-red), var(--code-background-color-green), var(--code-background-color-blue));
 }
