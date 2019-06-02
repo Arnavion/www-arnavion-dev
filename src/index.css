@@ -35,6 +35,10 @@ header, footer {
 	--border-color-red-default: 255;
 	--border-color-green-default: 255;
 	--border-color-blue-default: 255;
+
+	--code-background-color-red-default: 50;
+	--code-background-color-green-default: 50;
+	--code-background-color-blue-default: 50;
 }
 
 /* Dark mode is default for browsers that don't support prefers-color-scheme */
@@ -59,6 +63,10 @@ header, footer {
 		--border-color-red: var(--border-color-red-default);
 		--border-color-green: var(--border-color-green-default);
 		--border-color-blue: var(--border-color-blue-default);
+
+		--code-background-color-red: var(--code-background-color-red-default);
+		--code-background-color-green: var(--code-background-color-green-default);
+		--code-background-color-blue: var(--code-background-color-blue-default);
 	}
 /* } */
 
@@ -83,6 +91,10 @@ header, footer {
 		--border-color-red: calc(255 - var(--border-color-red-default));
 		--border-color-green: calc(255 - var(--border-color-green-default));
 		--border-color-blue: calc(255 - var(--border-color-blue-default));
+
+		--code-background-color-red: calc(255 - var(--code-background-color-red-default));
+		--code-background-color-green: calc(255 - var(--code-background-color-green-default));
+		--code-background-color-blue: calc(255 - var(--code-background-color-blue-default));
 	}
 }
 
@@ -101,4 +113,26 @@ a:visited {
 
 footer {
 	border-top: 1px solid rgb(var(--border-color-red), var(--border-color-green), var(--border-color-blue));
+}
+
+pre, code {
+	background-color: rgb(var(--code-background-color-red), var(--code-background-color-green), var(--code-background-color-blue));
+}
+
+pre {
+	padding: 1em;
+}
+
+code {
+	padding: 0 1em;
+	white-space: pre;
+}
+
+pre > code {
+	padding: 0;
+}
+
+section {
+	margin-left: 2em;
+	text-align: justify;
 }
