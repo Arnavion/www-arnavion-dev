@@ -5,3 +5,7 @@ disableKinds = ["sitemap", "taxonomy", "taxonomyTerm"]
 
 [blackfriday]
 nofollowLinks = true
+
+[outputs]
+home = ["HTML"]
+blog = ["HTML", "RSS"]

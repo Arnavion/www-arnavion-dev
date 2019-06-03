@@ -1,10 +1,3 @@
-{{ define "rss" }}
-	{{ with .OutputFormats.Get "rss" }}
-		<link rel="{{ .Rel }}" type="{{ .MediaType.Type }}" href="{{ .Permalink }}" title="{{ $.Site.Title }}" />
-	{{ end }}
-{{ end }}
-
-
 {{ define "content" }}
 	<nav>
 		<a href="{{ .Parent.Permalink }}">Back to Home</a>
