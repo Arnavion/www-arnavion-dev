@@ -10,7 +10,10 @@
 	<footer class="blog-comments">
 		<p>You can post comments on this blog post by:</p>
 		<ul>
-			<li><a href="https://github.com/Arnavion/www-arnavion-dev/issues/new?labels={{ .RelPermalink | anchorize }}" rel="nofollow">opening a GitHub issue,</a> or</li>
+			<li>
+				<a href="https://github.com/Arnavion/www-arnavion-dev/issues/new?title=%5B{{ .RelPermalink | anchorize }}%5D%20%3cAdd%20title%20here%3e" rel="nofollow">opening a GitHub issue,</a>
+				or
+			</li>
 			<li>sending mail to <code>blog@arnavion.dev</code> with a subject starting with <code>[{{ .RelPermalink | anchorize }}] </code></li>
 		</ul>
 	</footer>
