@@ -7,6 +7,7 @@
 		{{ with .OutputFormats.Get "rss" }}
 			<link rel="{{ .Rel }}" type="{{ .MediaType.Type }}" href="{{ .Permalink }}" title="{{ $.Site.Title }}" />
 		{{ end }}
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 	</head>
 	<body>
 		<header>
