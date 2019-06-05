@@ -221,7 +221,7 @@ The next step is to place an "order" for the certificate that the client wants. 
 {
     "identifiers": [
         { "type": "dns", "value": "..." }
-    ],
+    ]
 }
 ```
 
