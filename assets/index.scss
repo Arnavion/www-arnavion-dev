@@ -27,20 +27,21 @@ html {
 }
 
 body {
-	display: grid;
+	background-color: var(--background-color);
+	color: var(--color);
+	display: flex;
+	flex-direction: column;
 	font-size: large;
 	height: 100%;
 	margin: 0 1em;
-	grid-template-rows: min-content 1fr min-content;
 }
 
 header, footer {
 	text-align: center;
 }
 
-body {
-	background-color: var(--background-color);
-	color: var(--color);
+body > main {
+	flex-grow: 1;
 }
 
 a, a:hover, a:visited {
@@ -62,12 +63,12 @@ pre, code {
 }
 
 pre {
+	overflow-x: auto;
 	padding: 1em;
 }
 
 code {
 	padding: 0 1em;
-	white-space: pre;
 }
 
 pre > code {
