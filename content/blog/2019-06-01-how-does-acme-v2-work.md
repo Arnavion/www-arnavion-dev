@@ -141,7 +141,7 @@ The client then serializes this protected header object to JSON and base64-encod
 {{% section %}}
 {{%h 3 "The \"signature\"" %}}
 
-Lastly, the client needs to construct the "signature" of the request. It takes the "protected header", appends an ASCII `. (U+002E)`, then appends the "encoded payload". This resulting string is then converted to bytes in the ASCII encoding, and these ASCII-encoded bytes are the signature input. The client then uses the key to sign this signature input and get the signature. The signature bytes are base64-encoded into a string, which becomes the "signature" of the request.
+Lastly, the client needs to construct the "signature" of the request. It takes the "protected header", appends an ASCII `. (U+002E)`, then appends the "encoded payload". This resulting string is then converted to bytes in the ASCII encoding, and these ASCII-encoded bytes are the signature input. The client then uses the key to sign this signature input and get the signature bytes. The signature bytes are base64-encoded into a string, which becomes the "signature" of the request.
 
 The signing algorithm depends on the key type. For ECDSA P-384 keys the algorithm is SHA-384. For other formats, see [section 3.1 "alg" (Algorithm) Header Parameter Values for JWS in the JSON Web Algorithm RFC.](https://tools.ietf.org/html/rfc7518#section-3.1)
 
@@ -237,18 +237,9 @@ The body of this response contains a JSON object representing the order, like th
 
 ```
 {
-    "authorizations": [
-        "...",
-        ...
-    ],
-    "finalize": "...",
     "status": "..."
 }
 ```
-
-- The `authorizations` value is an array of strings, each of which represents an "authorization URL" for this order. There will be one such URL for each identifier in the order request.
-
-- The `finalize` value is a string representing the "finalize URL" of this order.
 
 - The `status` value represents the state of the order, and is used to determine how to proceed.
 
@@ -271,6 +262,20 @@ Creating an order is described in [section 7.4 Applying for Certificate Issuance
 
 {{% section %}}
 {{% h 2 "The order is `\"pending\"`" %}}
+
+If the order is in the `"pending"` state, the server is waiting for the client to complete the authorizations of the order. The order object looks like this:
+
+```
+{
+    "authorizations": [
+        "...",
+        ...
+    ],
+    "status": "pending"
+}
+```
+
+- The `authorizations` value is an array of strings, each of which represents an "authorization URL" for this order. There will be one such URL for each identifier in the order request.
 
 The server is waiting for the client to complete the authorizations of the order. As mentioned previously, there will be one authorization URL for each identifier the client sent in the initial order request. Each authorization contains a set of challenges that prove that the client has ownership of the corresponding domain.
 
@@ -318,7 +323,7 @@ To complete a pending authorization, the client chooses one of its challenges an
 
 - If the challenge is in the `"pending"` state, it is waiting for the client to satisfy the requirements of the challenge depending on its type. Once the client has done so, it sends an HTTP POST request to the challenge URL with an empty JSON object as the payload (note: not an empty payload, but an empty object `{}` as the payload) and expects a `200 OK` response. It then polls the challenge URL to get its updated status with an empty payload (note: not an empty object, but an empty payload, just like a regular POST-as-GET request).
 
-	See {{% hlink "Extra: Fulfilling an http-01 challenge" %}} for how to complete an http-01 challenge.
+	See {{% hlink "Extra: Fulfilling an http-01 challenge" %}} for how to fulfill an http-01 challenge.
 
 - If the challenge is in the `"processing"` state, the client has previously posted to the challenge URL. The server is still verifying the challenge, so the client should continue to poll the challenge URL.
 
@@ -326,7 +331,7 @@ To complete a pending authorization, the client chooses one of its challenges an
 
 - If the challenge is in the `"invalid"` state, the client has previously posted to the challenge URL and the server has rejected the challenge. The parent authorization of this challenge, and thus the parent order of that authorization, would've been marked as `"invalid"` as well, so the client should abort the order workflow.
 
-Note that it is possible for the challenge to remain in the `"pending"` state for a short period of time after the client has posted to the challenge URL, rather than immediately moving to `"processing"` state. If the client knows that it has already posted to the challenge URL, it should treat this just like if the challenge was in the `"processing"` state and continue polling the challenge URL, waiting for it to change state.
+Note that it is possible for the challenge to remain in the `"pending"` state for a short period of time after the client has posted to the challenge URL, rather than immediately moving to `"processing"` state. If the client knows that it has already posted to the challenge URL, it should treat this just like if the challenge was in the `"processing"` state and continue polling the challenge URL, waiting for it to change state. (This behavior appears to violate the RFC, but is displayed by Let's Encrypt.)
 
 The change of state of an authorization object is described in [section 7.1.6 Status Changes of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.7.1.6.p.3) The change of state of a challenge object is described in [section 7.1.6 Status Changes of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.7.1.6.p.2)
 
@@ -343,9 +348,18 @@ Once every authorization in the order is `"valid"`, the client polls the order, 
 {{% section %}}
 {{% h 2 "The order is `\"ready\"`" %}}
 
-If the order is in the `"ready"` state, the authorizations of the order have already been completed and the order is waiting to be finalized.
+If the order is in the `"ready"` state, the authorizations of the order have already been completed and the order is waiting to be finalized. The order object looks like this:
 
-The client constructs a DER-encoded certificate signing request (CSR). Depending on the ACME server provider, there may be various restrictions on the key type, key size, and properties of the CSR. For example, Let's Encrypt enforces that the account key is not reused as the CSR private key, and that the CSR does not contain `Not Before` and `Not After` properties since it sets these itself.
+```
+{
+    "finalize": "...",
+    "status": "ready"
+}
+```
+
+- The `finalize` value is a string representing the "finalize URL" of this order.
+
+The client constructs a DER-encoded certificate signing request (CSR). Depending on the ACME server provider, there may be various restrictions on the key type, key size, and properties of the CSR. For example, Let's Encrypt enforces that the account key is not reused as the CSR private key, and that the CSR does not contain `Not Before` and `Not After` properties since Let's Encrypt sets these itself.
 
 The client stores the private key of the CSR in its state. It then sends an HTTP POST request to the order's "finalize URL" with a payload that looks like this:
 
@@ -365,7 +379,7 @@ The client expects an `200 OK` response from the server, with a response contain
 {{% section %}}
 {{% h 2 "The order is `\"valid\"`" %}}
 
-If the order is in the `"valid"` state, the order has been completed. The order object will also have a `certificate` key, whose value is a string representing the URL of the signed certificate.
+If the order is in the `"valid"` state, the order has been completed. The order object looks like this:
 
 ```
 {
@@ -373,6 +387,8 @@ If the order is in the `"valid"` state, the order has been completed. The order 
     "status": "valid"
 }
 ```
+
+- The `certificate` value is a string representing the URL of the signed certificate.
 
 The client downloads the certificate from this URL and ends the order workflow. It combines this certificate with the private key of the CSR it had generated previously, and begins using it for its webserver.
 
