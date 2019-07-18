@@ -24,7 +24,7 @@ You don't have to read them in their entirety before you start, but it helps to 
 
 An ACME server is the entity that provides the TLS certificate. An ACME client is the entity that creates a certificate signing request (CSR) and submits it to the ACME server for signing. The ACME server then performs some validation to verify that the client owns the domain(s) that it is requesting a certificate for, which involves multiple back-and-forths between the client and the server. Finally, the server returns a certificate to the client which the client can then start using.
 
-The A in ACME stands for Automatic, and indeed the great thing about the protocol is that it can be compleletly automated. All interaction between the client and server is via the HTTP protocol.
+The A in ACME stands for Automatic, and indeed the great thing about the protocol is that it can be completely automated. All interaction between the client and server is via the HTTP protocol.
 
 {{% /section %}}
 
