@@ -32,7 +32,7 @@ The A in ACME stands for Automatic, and indeed the great thing about the protoco
 {{% section %}}
 {{% h 2 "Create an account key" %}}
 
-All interactions with the server other than the directory request and the "new nonce" request are authenticated. The client generates an account key in one of the formats supported by the server based on [section 3.1 "alg" (Algorithm) Header Parameter Values for JWS in the JSON Web Algorithm RFC](https://tools.ietf.org/html/rfc7518#section-3.1 with restrictions as noted in [section 6.2 Request Authentication of the ACME RFC](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.6.2). The client uses this key to sign its requests using the JSON Web Signature RFC.
+All interactions with the server other than the directory request and the "new nonce" request are authenticated. The client generates an account key in one of the formats supported by the server based on [section 3.1 "alg" (Algorithm) Header Parameter Values for JWS in the JSON Web Algorithm RFC](https://tools.ietf.org/html/rfc7518#section-3.1) with restrictions as noted in [section 6.2 Request Authentication of the ACME RFC](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.6.2). The client uses this key to sign its requests using the JSON Web Signature RFC.
 
 Check your ACME server provider's documentation for the keys it supports. In the case of Let's Encrypt, the strongest format it supports (as of this writing) are ECDSA P-384 keys. The rest of this document will use these keys for the examples.
 
