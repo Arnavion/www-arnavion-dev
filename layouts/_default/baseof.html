@@ -4,9 +4,9 @@
 		<meta charset="utf-8" />
 		<title>{{ .Title }} - arnavion.dev</title>
 		{{ $style := resources.Get "index.scss" | resources.ToCSS }}
-		<link rel="stylesheet" href="{{ $style.Permalink }}" />
+		<link rel="stylesheet" href="{{ $style.RelPermalink }}" />
 		{{ with .OutputFormats.Get "rss" }}
-			<link rel="{{ .Rel }}" type="{{ .MediaType.Type }}" href="{{ .Permalink }}" title="{{ $.Site.Title }}" />
+			<link rel="{{ .Rel }}" type="{{ .MediaType.Type }}" href="{{ .RelPermalink }}" title="{{ $.Site.Title }}" />
 		{{ end }}
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 	</head>

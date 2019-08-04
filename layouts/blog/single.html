@@ -1,6 +1,18 @@
 {{ define "content" }}
-	<nav>
-		<a href="{{ .Parent.Permalink }}">Back to Blog</a>
+	<nav class="blog">
+		<span>
+			{{ if .PrevInSection }}
+				<a href="{{ .PrevInSection.RelPermalink }}">&lt; {{ .PrevInSection.Title }}</a>
+			{{ end }}
+		</span>
+
+		<span><a href="{{ .Parent.RelPermalink }}">Back to Blog</a></span>
+
+		<span>
+			{{ if .NextInSection }}
+				<a href="{{ .NextInSection.RelPermalink }}">{{ .NextInSection.Title }} &gt;</a>
+			{{ end }}
+		</span>
 	</nav>
 
 	<article>
