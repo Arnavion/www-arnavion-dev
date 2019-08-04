@@ -101,3 +101,11 @@ nav.blog > :first-child {
 nav.blog > :last-child {
 	text-align: right;
 }
+
+blockquote {
+	border-left: 1px var(--color) solid;
+	filter: brightness(80%);
+	font-style: italic;
+	margin-left: 1em;
+	padding-left: 1em;
+}
