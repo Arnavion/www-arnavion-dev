@@ -83,7 +83,9 @@ The Function app needs OAuth2 tokens from Azure Active Directory, one for each A
 
     There will be two environment variables set on its process named `MSI_ENDPOINT` and `MSI_SECRET`. The app sends an HTTP GET request to `${MSI_ENDPOINT}?resource=${RESOURCE}&api-verson=2017-09-01` with a `Secret` header set to `${MSI_SECRET}`.
 
-    Well, I assume that's how it works, based on [the code in the `Microsoft.Azure.Services.AppAuthentication` library.](https://github.com/Azure/azure-sdk-for-net/blob/db74f3ec0b3c3c7da971acc76df04da749658321/sdk/mgmtcommon/AppAuthentication/Azure.Services.AppAuthentication/TokenProviders/MsiAccessTokenProvider.cs) I use the Linux runtime for my Function app, and currently [MSI does not work for Linux Function apps,](https://github.com/Azure/Azure-Functions/issues/1066) so I did not implement and test it.
+    ~~Well, I assume that's how it works, based on [the code in the `Microsoft.Azure.Services.AppAuthentication` library.](https://github.com/Azure/azure-sdk-for-net/blob/db74f3ec0b3c3c7da971acc76df04da749658321/sdk/mgmtcommon/AppAuthentication/Azure.Services.AppAuthentication/TokenProviders/MsiAccessTokenProvider.cs) I use the Linux runtime for my Function app, and currently [MSI does not work for Linux Function apps,](https://github.com/Azure/Azure-Functions/issues/1066) so I did not implement and test it.~~
+
+    Update 2019-08-25: MSI for Linux Function apps works now.
 
 In either case, the app should get a `200 OK` response, with a JSON body that looks like this:
 
