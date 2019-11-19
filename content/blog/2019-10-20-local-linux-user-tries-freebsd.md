@@ -42,7 +42,7 @@ C was my second choice, but again I didn't want to install a C toolchain on the 
 
 I then tried shell, and hit two snags:
 
-- The default FreeBSD shell is `tcsh`. I *was* prepared to not have `bash`, but `tcsh` is quite alien in its syntax compared to regular POSIX `sh`. I decided to ignore it and just use POSIX `sh`.
+- The default FreeBSD shell (for the root user, as per [this HN user](https://news.ycombinator.com/item?id=21567879)) is `tcsh`. I *was* prepared to not have `bash`, but `tcsh` is quite alien in its syntax compared to regular POSIX `sh`. I decided to ignore it and just use POSIX `sh`.
 
 - POSIX `sh` misses a few things I'd come to take for granted in `bash`.
 
@@ -58,6 +58,8 @@ The result is at [pfsense-dashboard-cli](https://github.com/Arnavion/pfsense-das
 
 It does have a dependency on `perl` to get the current time in seconds from the Unix epoch. This is because FreeBSD's `date` does not have a way to get milliseconds in the time, which is important for refreshing the dashboard once every second, which in turn is important for getting accurate network usage numbers (`(current bytes - previous bytes) / (current iteration time - previous iteration time)`; losing milliseconds in the denominator can introduce large errors in the result).
 
+&lt;update&gt; Users on HN pointed out [here](https://news.ycombinator.com/item?id=21567675) and [here](https://news.ycombinator.com/item?id=21568087) that `perl` is not part of a base FreeBSD install. But it *does* appear to be part of a default pfSense install, so it doesn't violate my "don't manually install any additional packages" constraint. &lt;/update&gt;
+
 {{% /section %}}
 
 
@@ -68,17 +70,37 @@ The list of files and commands above shows some major differences between Linux 
 
 In contrast, a lot of the equivalent information in FreeBSD is obtained through `sysctl` or shell commands intended for human consumption. In fact, FreeBSD does not have procfs or sysfs at all. (Apparently a simplified procfs is available for you to mount at `/proc` yourself if you want it. I did not try it, because it wouldn't have had everything I need anyway.)
 
-In some cases the `sysctl` output is not easily machine-parseable. For example, the uptime information from `sysctl -n kern.boottime` looks like
+~~In some cases the `sysctl` output is not easily machine-parseable. For example, the uptime information from `sysctl -n kern.boottime` looks like~~
 
-```
+~~```
 { sec = 1570952543, usec = 411609 } Sun Oct 13 00:42:23 2019
-```
+```~~
 
-... which is a strange amalgamation of a C-like structure and a formatted datetime string. While it looks easy enough to extract the first two numbers with a regex or naively splitting on spaces, an output like this makes you wonder if it's guaranteed to always be like that. For example, could it sometimes get emitted as `{ usec = ..., sec = ... } ...` instead? Compare with Linux's `/proc/uptime` - `601553.11 14266486.38` - it can be easily split on the space and needs no additional parsing.
+~~... which is a strange amalgamation of a C-like structure and a formatted datetime string. While it looks easy enough to extract the first two numbers with a regex or naively splitting on spaces, an output like this makes you wonder if it's guaranteed to always be like that. For example, could it sometimes get emitted as `{ usec = ..., sec = ... } ...` instead? Compare with Linux's `/proc/uptime` - `601553.11 14266486.38` - it can be easily split on the space and needs no additional parsing.~~
 
-Similarly, the temperature sensor values on Linux from files under `/sys/class/hwmon` are usually just numbers in milli-degrees Celsius. For example, `/sys/class/hwmon/hwmon0/temp1_input` might be `32750` representing 32.750 degrees Celsius. However the FreeBSD `sysctl` values look like `30.0C`, so they first need string processing to strip the `C` suffix and get the raw value.
+~~Similarly, the temperature sensor values on Linux from files under `/sys/class/hwmon` are usually just numbers in milli-degrees Celsius. For example, `/sys/class/hwmon/hwmon0/temp1_input` might be `32750` representing 32.750 degrees Celsius. However the FreeBSD `sysctl` values look like `30.0C`, so they first need string processing to strip the `C` suffix and get the raw value.~~
+
+&lt;update&gt;
+
+An HN user [pointed out](https://news.ycombinator.com/item?id=21567585) that `sysctl -b kern.boottime` might be a better option. Indeed, it writes 16 bytes, where the first eight are the seconds and the latter eight the microseconds of the bootime, in little-endian. `awk` can't easily parse raw binary input, so the script passes it through `od -t uI` first.
+
+Similarly, `sysctl -b dev.cpu.0.temperature` writes a four-byte unsigned integer that represents the temperature in deci-Kelvin. For example, a value of 3061 means the temperature is 306.1 K, or 33.0 °C.
+
+So it doesn't matter if the output of `sysctl -n` is not ideal for machine consumption.
+
+&lt;/update&gt;
 
 And again, getting network stats on Linux can be done by reading `/sys/class/net/enp4s0/statistics/{r,t}x_bytes` which yield a single number each. FreeBSD's `netstat -I em0 -bin` returns a tabular display, so you have to skip the first line of table headers, then split each row on whitespace, then select the second-last or fifth-last values and add them manually. My NICs use the `igb` driver which does have sysctls similar to the Linux `{r,t}x_bytes` files, but these would only exist for the hardware interfaces and  not for logical interfaces like bridge networks.
+
+&lt;update&gt;
+
+The same HN user pointed out that `netstat` writes its output using libxo, and thus `netstat -I em0 -bin --libxo json` would write JSON output. This would be good, except that `awk` doesn't really have a way to handle this better than the original pretty-printed tabular output. The best I could come up with was to use `json,pretty` so that every key-value pair goes on its own line, and then slice the lines to extract the values, but this would not be an improvement.
+
+Of course, this would not be a problem for a program that can parse JSON or XML.
+
+pfSense also does not appear to have any simple `jq`-like utilities installed by default. It does have [`uclcmd`,](https://github.com/allanjude/uclcmd) and I got as far as `netstat -I em0 -bin --libxo json | uclcmd get -f - -j '.statistics.interface'` to get an array of objects, but could get no further on account of `uclcmd`'s non-existent documentation. I would now need to apply a function like `["received-bytes"]` to each element of the array, and its Github readme hints at the existence of an `each` function, but any attempt to use it made the command segfault. I gave up on it.
+
+&lt;/update&gt;
 
 For what it's worth, some of these problems are solved by using C instead of shell. For example, the `gettimeofday` function does return the current time with milliseconds. Network stats can be obtained in strongly-typed fashion using `ioctl`, which is also how pfSense web dashboard gets them.
 
@@ -86,9 +108,9 @@ Apart from that, some of the FreeBSD commands are subtly different from their Li
 
 But that's enough complaining. Now for the good parts.
 
-The BSDs are known for having good manuals, though pfSense does not include them so I had to look for them online. They are at [this URL.](https://www.freebsd.org/cgi/man.cgi?query=&apropos=0&sektion=0&manpath=FreeBSD+11.2-RELEASE&arch=default&format=html) Google and DuckDuckGo would not return that URL when searching for, say, `freebsd man netstat`, and instead return outdated manuals on third-party hosting or manuals from other distros, so I've bookmarked that URL in my browser. The manuals are certainly very detailed and answered most of the questions I had, without needing to search forums like I usually have to for Linux questions.
+The BSDs are known for having good manuals, though pfSense does not include them so I had to look for them online. They are at [this URL.](https://www.freebsd.org/cgi/man.cgi?query=&apropos=0&sektion=0&manpath=FreeBSD+11.2-RELEASE&arch=default&format=html) ~~Google and DuckDuckGo would not return that URL when searching for, say, `freebsd man netstat`, and instead return outdated manuals on third-party hosting or manuals from other distros, so I've bookmarked that URL in my browser.~~ &lt;update&gt; An HN user [pointed out](https://news.ycombinator.com/item?id=21567568) that DDG has a `!man` bang command - it forwards to [manpages.me](https://manpage.me) &lt;/update&gt; The manuals are certainly very detailed and answered most of the questions I had, without needing to search forums like I usually have to for Linux questions.
 
-And lastly, I learned that `awk` is a pretty good language for writing complex scripts while still having a simple DSL for shelling out to processes and chomping their input. It does have some idiosyncrasies around shelling out to processes and getting their output:
+And lastly, I learned that `awk` is a pretty good language for writing complex scripts while still having a simple DSL for shelling out to processes and chomping their output. It does have some idiosyncrasies though:
 
 - Repeatedly "spawn"ing the same process (`"foo" | getline`) actually reads more lines from the first invocation of the process, until explicitly `close()`d.
 - Functions can't have local variables; assigning to local variables instead sets global variables. They need to be specified as parameters of the function and ignored by the caller to be local.
@@ -99,7 +121,7 @@ Regardless, it is a godsend to be able to do string processing and arithmetic in
 
 FreeBSD's manual for `awk` specifically is at [this URL.](https://docs.freebsd.org/info/gawk/gawk.info.Index.html)
 
-My dayjob involves working with Raspberry Pis (running Raspbian). I usually ssh to them over ethernet rather than connect a serial cable or a monitor to them. However if one were to change its IP address while I'm away, I would be locked out of it until I hooked up a serial cable or monitor and dumped its new IP address. So I decided to write a script that would repeatedly flash the LED on the Pi in morse code corresponding to its current IP address. It was quite easy to write this script in `awk`, including the part of converting the address components to binary via division. It would've been a tad more complicated in `bash`.
+My dayjob involves working with Raspberry Pis (running Raspbian). I usually ssh to them over ethernet rather than connect a serial cable or a monitor-and-keyboard to them. However if one were to change its IP address while I'm away, I would be locked out of it until I hooked up a serial cable or monitor-and-keyboard and dumped its new IP address. So I decided to write a script that would repeatedly flash the LED on the Pi in morse code corresponding to its current IP address. It was quite easy to write this script in `awk`, including the part of converting the address components to binary via division. It would've been a tad more complicated in `bash`. You can find the script [here.](https://gist.github.com/Arnavion/32bf76c0ad35318c44041a6d1f1cdb39)
 
 Perl would probably be another good choice to solve these kinds of problems, for both Linux and FreeBSD, but I have no experience with it. Maybe one day...
 
