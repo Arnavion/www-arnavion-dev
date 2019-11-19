@@ -99,7 +99,7 @@ Regardless, it is a godsend to be able to do string processing and arithmetic in
 
 FreeBSD's manual for `awk` specifically is at [this URL.](https://docs.freebsd.org/info/gawk/gawk.info.Index.html)
 
-My dayjob involves working with Raspberry Pis. I usually ssh to them over ethernet rather than connect a serial cable or a monitor to them. However if one were to change its IP address while I'm away, I would be locked out of it until I hooked up a serial cable or monitor and dumped its new IP address. So I decided to write a script that would repeatedly flash the LED on the Pi in morse code corresponding to its current IP address. It was quite easy to write this script in `awk`, including the part of converting the address components to binary via division. It would've been a tad more complicated in `bash`.
+My dayjob involves working with Raspberry Pis (running Raspbian). I usually ssh to them over ethernet rather than connect a serial cable or a monitor to them. However if one were to change its IP address while I'm away, I would be locked out of it until I hooked up a serial cable or monitor and dumped its new IP address. So I decided to write a script that would repeatedly flash the LED on the Pi in morse code corresponding to its current IP address. It was quite easy to write this script in `awk`, including the part of converting the address components to binary via division. It would've been a tad more complicated in `bash`.
 
 Perl would probably be another good choice to solve these kinds of problems, for both Linux and FreeBSD, but I have no experience with it. Maybe one day...
 
