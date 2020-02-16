@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>$title$ - arnavion.dev</title>
+		<style type="text/css">$css$</style>
+		<link rel="alternate" type="application/rss+xml" href="/blog/index.xml" title="www.arnavion.dev" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+	</head>
+	<body>
+		<span class="work-around-firefox-reader-mode-bug" rel="author">&#8204;</span>
+
+		<header>
+			<h1>$title$</h1>
+		</header>
+
+		<main>
+			<nav class="blog">
+				<span>$if(blog_previous_filename)$<a href="/blog/$blog_previous_filename$/">&lt; $blog_previous_title$</a>$endif$</span>
+				<span><a href="/blog/">Back to Blog</a></span>
+				<span>$if(blog_next_filename)$<a href="/blog/$blog_next_filename$/">$blog_next_title$ &gt;</a>$endif$</span>
+			</nav>
+
+			<article>
+$body$
+			</article>
+
+			<footer class="blog-comments">
+				<p>You can post comments on this blog post by:</p>
+				<ul>
+					<li>
+						<a href="https://github.com/Arnavion/www-arnavion-dev/issues/new?title=%5Bblog-$blog_current_dirname$%5D%20%3cAdd%20title%20here%3e" rel="nofollow">opening a GitHub issue,</a>
+						or
+					</li>
+					<li>sending mail to <code>blog@arnavion.dev</code> with a subject starting with <code>[blog-$blog_current_dirname$] </code></li>
+				</ul>
+			</footer>
+		</main>
+
+		<footer>
+			<p>
+				Copyright Arnav Singh,
+				under the <a href="https://creativecommons.org/licenses/by/4.0/" rel="license nofollow">Creative Commons Attribution 4.0 International License</a>
+			</p>
+			<p>Source at <a href="https://github.com/Arnavion/www-arnavion-dev" rel="nofollow">https://github.com/Arnavion/www-arnavion-dev</a></p>
+		</footer>
+	</body>
+</html>

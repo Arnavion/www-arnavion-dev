@@ -2,23 +2,28 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>{{ .Title }} - arnavion.dev</title>
-		{{ $style := resources.Get "index.scss" | resources.ToCSS }}
-		<link rel="stylesheet" href="{{ $style.RelPermalink }}" />
-		{{ with .OutputFormats.Get "rss" }}
-			<link rel="{{ .Rel }}" type="{{ .MediaType.Type }}" href="{{ .RelPermalink }}" title="{{ $.Site.Title }}" />
-		{{ end }}
+		<title>$title$ - arnavion.dev</title>
+		<style type="text/css">$css$</style>
+		<link rel="alternate" type="application/rss+xml" href="/blog/index.xml" title="www.arnavion.dev" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 	</head>
 	<body>
 		<span class="work-around-firefox-reader-mode-bug" rel="author">&#8204;</span>
 
 		<header>
-			<h1>{{ .Title }}</h1>
+			<h1>$title$</h1>
 		</header>
 
 		<main>
-			{{ block "content" . }}{{ end }}
+			<nav>
+				<a href="/">Back to Home</a>
+			</nav>
+
+			<nav>
+				<h2>Articles</h2>
+
+$body$
+			</nav>
 		</main>
 
 		<footer>

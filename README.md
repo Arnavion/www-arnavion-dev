@@ -1,13 +1,17 @@
 Source of <https://www.arnavion.dev/>
 
 
-# Build
-
-Install hugo extended.
+# Pre-requisites
 
 ```sh
-rm -rf ./public/ ./resources/
-hugo
+zypper in --no-recommends pandoc sassc
+```
+
+
+# Build
+
+```sh
+./build.sh
 ```
 
 
@@ -32,7 +36,7 @@ az storage blob delete-batch \
 
 az storage blob upload-batch \
     --connection-string "$AZURE_STORAGE_ACCOUNT_CONNECTION_STRING" \
-    --source "$PWD/public" --destination '$web' --type block \
+    --source "$PWD/out" --destination '$web' --type block \
     --verbose
 
 az cdn endpoint purge \

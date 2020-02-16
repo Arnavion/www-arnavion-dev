@@ -3,15 +3,15 @@ title: "2019-10-20 Local Linux user tries FreeBSD"
 date: '2019-10-20T00:00:00Z'
 ---
 
-I recently built a new desktop computer for myself, and decided to repurpose my old desktop computer to be [a pfSense router.](https://en.wikipedia.org/wiki/PfSense) pfSense comes with a webserver that serves a configuration GUI accessible from any device on the LAN. The GUI also has a status dashboard that shows real-time hardware stats, service status, network utilization and firewall logs.
+I recently built a new desktop computer for myself, and decided to repurpose my old desktop computer to be [a pfSense router.](https://en.wikipedia.org/wiki/PfSense){ rel=nofollow } pfSense comes with a webserver that serves a configuration GUI accessible from any device on the LAN. The GUI also has a status dashboard that shows real-time hardware stats, service status, network utilization and firewall logs.
 
 However I wanted to be able to access the status dashboard from the CLI, so that I could stuff it in a tmux session along with the dashboards for my other computers instead of running a whole browser instance just for it. So I set about figuring out how the web dashboard works behind the scenes and how I could replicate it to run as a CLI program over ssh.
 
 Since pfSense is based on FreeBSD and I only had experience with Linux, it was a learning experience to find all the differences between the two - from minor differences in the parameters of well-known commands, to differences in philosophy.
 
 
-{{% section %}}
-{{% h 2 "What does the status dashboard show?" %}}
+<section>
+<h2 id="what-does-the-status-dashboard-show">[What does the status dashboard show?](#what-does-the-status-dashboard-show)</h2>
 
 The information that pfSense's web dashboard shows is itself pulled from shelling out to native commands or reading files:
 
@@ -24,11 +24,11 @@ The information that pfSense's web dashboard shows is itself pulled from shellin
 - Network interfaces status via `ifconfig` and `netstat`
 - Services status (running or not running) via `pgrep`
 
-{{% /section %}}
+</section>
 
 
-{{% section %}}
-{{% h 2 "Writing the CLI dashboard" %}}
+<section>
+<h2 id="writing-the-cli-dashboard">[Writing the CLI dashboard](#writing-the-cli-dashboard)</h2>
 
 Now that I knew what files and shell commands my dashboard would invoke, the next step was to decide what language I should implement it in.
 
@@ -42,7 +42,7 @@ C was my second choice, but again I didn't want to install a C toolchain on the 
 
 I then tried shell, and hit two snags:
 
-- The default FreeBSD shell (for the root user, as per [this HN user](https://news.ycombinator.com/item?id=21567879)) is `tcsh`. I *was* prepared to not have `bash`, but `tcsh` is quite alien in its syntax compared to regular POSIX `sh`. I decided to ignore it and just use POSIX `sh`.
+- The default FreeBSD shell (for the root user, as per [this HN user](https://news.ycombinator.com/item?id=21567879){ rel=nofollow }) is `tcsh`. I *was* prepared to not have `bash`, but `tcsh` is quite alien in its syntax compared to regular POSIX `sh`. I decided to ignore it and just use POSIX `sh`.
 
 - POSIX `sh` misses a few things I'd come to take for granted in `bash`.
 
@@ -54,17 +54,17 @@ I did manage to implement the dashboard in POSIX `sh`; however its CPU usage was
 
 I initially set about replacing some of the `cut`s and `grep`s and `sed`s with `awk`. But then I realized I could just as well write the whole dashboard as a single AWK script and not bother with POSIX `sh` at all.
 
-The result is at [pfsense-dashboard-cli](https://github.com/Arnavion/pfsense-dashboard-cli) and I'm quite satisfied with it.
+The result is at [pfsense-dashboard-cli](https://github.com/Arnavion/pfsense-dashboard-cli){ rel=nofollow } and I'm quite satisfied with it.
 
 It does have a dependency on `perl` to get the current time in seconds from the Unix epoch. This is because FreeBSD's `date` does not have a way to get milliseconds in the time, which is important for refreshing the dashboard once every second, which in turn is important for getting accurate network usage numbers (`(current bytes - previous bytes) / (current iteration time - previous iteration time)`; losing milliseconds in the denominator can introduce large errors in the result).
 
-&lt;update&gt; Users on HN pointed out [here](https://news.ycombinator.com/item?id=21567675) and [here](https://news.ycombinator.com/item?id=21568087) that `perl` is not part of a base FreeBSD install. But it *does* appear to be part of a default pfSense install, so it doesn't violate my "don't manually install any additional packages" constraint. &lt;/update&gt;
+&lt;update&gt; Users on HN pointed out [here](https://news.ycombinator.com/item?id=21567675){ rel=nofollow } and [here](https://news.ycombinator.com/item?id=21568087){ rel=nofollow } that `perl` is not part of a base FreeBSD install. But it *does* appear to be part of a default pfSense install, so it doesn't violate my "don't manually install any additional packages" constraint. &lt;/update&gt;
 
-{{% /section %}}
+</section>
 
 
-{{% section %}}
-{{% h 2 "What did I learn?" %}}
+<section>
+<h2 id="what-did-i-learn">[What did I learn?](#what-did-i-learn)</h2>
 
 The list of files and commands above shows some major differences between Linux and FreeBSD. A Linux program would get uptime from `/proc/uptime`, read temperature sensors from files under `/sys/class/hwmon`, and get CPU, memory and network stats from procfs and sysfs. Most of these interfaces are exposed as raw numbers and can be easily manipulated from shell or with `bc`.
 
@@ -82,7 +82,7 @@ In contrast, a lot of the equivalent information in FreeBSD is obtained through 
 
 &lt;update&gt;
 
-An HN user [pointed out](https://news.ycombinator.com/item?id=21567585) that `sysctl -b kern.boottime` might be a better option. Indeed, it writes 16 bytes, where the first eight are the seconds and the latter eight the microseconds of the bootime, in little-endian. `awk` can't easily parse raw binary input, so the script passes it through `od -t uI` first.
+An HN user [pointed out](https://news.ycombinator.com/item?id=21567585){ rel=nofollow } that `sysctl -b kern.boottime` might be a better option. Indeed, it writes 16 bytes, where the first eight are the seconds and the latter eight the microseconds of the bootime, in little-endian. `awk` can't easily parse raw binary input, so the script passes it through `od -t uI` first.
 
 Similarly, `sysctl -b dev.cpu.0.temperature` writes a four-byte unsigned integer that represents the temperature in deci-Kelvin. For example, a value of 3061 means the temperature is 306.1 K, or 33.0 °C.
 
@@ -98,7 +98,7 @@ The same HN user pointed out that `netstat` writes its output using libxo, and t
 
 Of course, this would not be a problem for a program that can parse JSON or XML.
 
-pfSense also does not appear to have any simple `jq`-like utilities installed by default. It does have [`uclcmd`,](https://github.com/allanjude/uclcmd) and I got as far as `netstat -I em0 -bin --libxo json | uclcmd get -f - -j '.statistics.interface'` to get an array of objects, but could get no further on account of `uclcmd`'s non-existent documentation. I would now need to apply a function like `["received-bytes"]` to each element of the array, and its Github readme hints at the existence of an `each` function, but any attempt to use it made the command segfault. I gave up on it.
+pfSense also does not appear to have any simple `jq`-like utilities installed by default. It does have [`uclcmd`,](https://github.com/allanjude/uclcmd){ rel=nofollow } and I got as far as `netstat -I em0 -bin --libxo json | uclcmd get -f - -j '.statistics.interface'` to get an array of objects, but could get no further on account of `uclcmd`'s non-existent documentation. I would now need to apply a function like `["received-bytes"]` to each element of the array, and its Github readme hints at the existence of an `each` function, but any attempt to use it made the command segfault. I gave up on it.
 
 &lt;/update&gt;
 
@@ -108,7 +108,7 @@ Apart from that, some of the FreeBSD commands are subtly different from their Li
 
 But that's enough complaining. Now for the good parts.
 
-The BSDs are known for having good manuals, though pfSense does not include them so I had to look for them online. They are at [this URL.](https://www.freebsd.org/cgi/man.cgi?query=&apropos=0&sektion=0&manpath=FreeBSD+11.2-RELEASE&arch=default&format=html) ~~Google and DuckDuckGo would not return that URL when searching for, say, `freebsd man netstat`, and instead return outdated manuals on third-party hosting or manuals from other distros, so I've bookmarked that URL in my browser.~~ &lt;update&gt; An HN user [pointed out](https://news.ycombinator.com/item?id=21567568) that DDG has a `!man` bang command - it forwards to [manpages.me](https://manpage.me) &lt;/update&gt; The manuals are certainly very detailed and answered most of the questions I had, without needing to search forums like I usually have to for Linux questions.
+The BSDs are known for having good manuals, though pfSense does not include them so I had to look for them online. They are at [this URL.](https://www.freebsd.org/cgi/man.cgi?query=&apropos=0&sektion=0&manpath=FreeBSD+11.2-RELEASE&arch=default&format=html){ rel=nofollow } ~~Google and DuckDuckGo would not return that URL when searching for, say, `freebsd man netstat`, and instead return outdated manuals on third-party hosting or manuals from other distros, so I've bookmarked that URL in my browser.~~ &lt;update&gt; An HN user [pointed out](https://news.ycombinator.com/item?id=21567568){ rel=nofollow } that DDG has a `!man` bang command - it forwards to [manpages.me](https://manpage.me){ rel=nofollow } &lt;/update&gt; The manuals are certainly very detailed and answered most of the questions I had, without needing to search forums like I usually have to for Linux questions.
 
 And lastly, I learned that `awk` is a pretty good language for writing complex scripts while still having a simple DSL for shelling out to processes and chomping their output. It does have some idiosyncrasies though:
 
@@ -119,10 +119,10 @@ And lastly, I learned that `awk` is a pretty good language for writing complex s
 
 Regardless, it is a godsend to be able to do string processing and arithmetic in a single program without needing to shell out to `grep` or `bc` or `numfmt` or `printf`.
 
-FreeBSD's manual for `awk` specifically is at [this URL.](https://docs.freebsd.org/info/gawk/gawk.info.Index.html)
+FreeBSD's manual for `awk` specifically is at [this URL.](https://docs.freebsd.org/info/gawk/gawk.info.Index.html){ rel=nofollow }
 
-My dayjob involves working with Raspberry Pis (running Raspbian). I usually ssh to them over ethernet rather than connect a serial cable or a monitor-and-keyboard to them. However if one were to change its IP address while I'm away, I would be locked out of it until I hooked up a serial cable or monitor-and-keyboard and dumped its new IP address. So I decided to write a script that would repeatedly flash the LED on the Pi in morse code corresponding to its current IP address. It was quite easy to write this script in `awk`, including the part of converting the address components to binary via division. It would've been a tad more complicated in `bash`. You can find the script [here.](https://gist.github.com/Arnavion/32bf76c0ad35318c44041a6d1f1cdb39)
+My dayjob involves working with Raspberry Pis (running Raspbian). I usually ssh to them over ethernet rather than connect a serial cable or a monitor-and-keyboard to them. However if one were to change its IP address while I'm away, I would be locked out of it until I hooked up a serial cable or monitor-and-keyboard and dumped its new IP address. So I decided to write a script that would repeatedly flash the LED on the Pi in morse code corresponding to its current IP address. It was quite easy to write this script in `awk`, including the part of converting the address components to binary via division. It would've been a tad more complicated in `bash`. You can find the script [here.](https://gist.github.com/Arnavion/32bf76c0ad35318c44041a6d1f1cdb39){ rel=nofollow }
 
 Perl would probably be another good choice to solve these kinds of problems, for both Linux and FreeBSD, but I have no experience with it. Maybe one day...
 
-{{% /section %}}
+</section>

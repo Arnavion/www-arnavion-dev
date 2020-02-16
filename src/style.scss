@@ -121,7 +121,7 @@ and moves it from its right place in the page to the top as a byline.
 Work around it by adding an element with this CSS class. The element:
 
 - has to be an HTML tag that would normally be visible, so not a <link>, etc.
-- has to use CSS instead of just `style="display: none"` because it checks the style attribute to skip "invisible" elements.
+- has to use CSS instead of just `style="display: none"` because reader mode checks the style attribute to skip "invisible" elements.
 - has to have text content that's greater than 0 length after trim()ming.
 
 Ref: https://github.com/mozilla/readability/blob/master/Readability.js
