@@ -17,21 +17,25 @@ The Azure setup for renewing the Let's Encrypt cert ran successfully for the fir
 
 - An Azure Storage account.
 
-    This storage account is used to host the files served by the static website. You have to enable it to serve static websites, after which it automatically gets a contained named `$web`. Any files you put inside this container are served by the storage account's blob HTTP endpoint.
+    This Storage account is used to host the files served by the static website. You have to enable it to serve static websites, after which it automatically gets a contained named `$web`. Any files you put inside this container are served by the Storage account's blob HTTP endpoint.
 
 - An Azure CDN profile and endpoint.
 
-    Since I want to use my own custom domain instead of the storage account's blob HTTP endpoint, I also provisioned an Azure CDN profile in front of the storage account. This also means every HTTP request does not go to the single storage account in the US, but to the CDN cache that has endpoints all over the world.
+    Since I want to use my own custom domain instead of the Storage account's blob HTTP endpoint, I also provisioned an Azure CDN profile in front of the Storage account. This also means every HTTP request does not go to the single Storage account in the US, but to the CDN cache that has endpoints all over the world.
 
-    Note that the CDN endpoint's origin type must be set to "Custom origin" and point to the storage account's web endpoint. You don't want to set it to "Storage", because then the container name becomes part of the URL, like `https://cdnendpoint.azureedge.net/$web/index.html`
+    Note that the CDN endpoint's origin type must be set to "Custom origin" and point to the Storage account's web endpoint. You don't want to set it to "Storage", because then the container name becomes part of the URL, like `https://cdnendpoint.azureedge.net/$web/index.html`
 
 - A custom domain. Configure your domain's DNS to add a CNAME record pointing to the CDN endpoint, and configure the CDN endpoint itself to accept the custom domain.
 
 - An Azure KeyVault to host the Let's Encrypt account key, and the HTTPS certificate itself.
 
-- An Azure Function app to periodically run the cert renewal workflow.
+- An Azure Function app to run the ACME cert renewal workflow.
 
-- An Azure Service Principal for the identity of the Function app, with access to the storage account, KeyVault and CDN endpoint. Alternatively, use the "Managed Service Identity" of the Function app.
+- An Azure DNS server used for dns-01 challenges. This server does not need to serve the whole domain; it's only used to serve the dns-01 challenge's TXT record.
+
+- An Azure Function app that ensures the CDN custom domain is using the latest cert from the KeyVault.
+
+- Azure Storage accounts for each of the two Function apps. You could use the same Storage account for both, and even use the same Storage account as the one hosting the website.
 
 </section>
 
@@ -47,21 +51,19 @@ So this was a good opportunity to use Let's Encrypt instead.
 
 Function apps are limited in [what programming languages they support.](https://docs.microsoft.com/en-us/azure/azure-functions/supported-languages){ rel=nofollow } I wanted to only use one of the GA languages and not the preview ones, so I had a choice between Java, JavaScript and any .Net Core language. I decided to go with F#, as that is the most modern and type-safe language among the choices I had.
 
-You can find the code [here.](https://github.com/Arnavion/acme-azure-function){ rel=nofollow } It includes an ARM deployment template plus manual steps to deploy everything listed above.
+You can find the code for both Functions [here.](https://github.com/Arnavion/acme-azure-function){ rel=nofollow }
 
-There are two distinct processes of getting a cert on your CDN endpoint - provisioning the cert from Let's Encrypt, and deploying the provisioned cert to the CDN endpoint. Technically the process that deploys the cert to the CDN doesn't care where the cert came from, so it should be independent of the process that provisions the cert. That's why there are two functions in the Function app:
+- The `Acme` Function periodically checks if the cert in the KeyVault is close to expiry. If it is, the Function requests a new cert from the ACME endpoint and uploads it to the KeyVault.
 
-- `RenewKeyVaultCertificateOrchestratorManager`
+- The `UpdateCdnCertificate` Function periodically checks if the CDN custom domain is using the latest version of the cert in the KeyVault. If it isn't, the Function updates the CDN custom domain so that it does.
 
-    This function checks whether the cert needs to be renewed. If it does, it performs the ACME workflow, including uploading the http-01 challenge blob to the storage account, and uploads the final cert to the KeyVault.
+Each Function's directory also has an ARM deployment template and documentation for how to deploy it.
 
-- `UpdateCdnCertificate`
-
-    This function compares the cert that the CDN is currently configured to use with the one in the KeyVault. If they differ, it deploys the KeyVault cert to the CDN.
+The reason there are two distinct Functions is that the two are independent of each other. The `Acme` Function completes the dns-01 challenge, and thus only needs to work with the Azure DNS server to complete the challenge. (It requests a wildcard cert, so it couldn't complete an http-01 challenge anyway.) It doesn't need to know that this cert is then used with a CDN custom endpoint; that's the `UpdateCdnCertificate` Function's responsibility.
 
 Also, as a general principle, I did not want to use any of the existing Azure libraries for interacting with its REST API. I've had bad experiences with them in the past given that they pull in megabytes of dependencies and frequently have conflicts with the versions of those dependencies. I would also have to keep on top of their new releases / CVEs and update the dependency versions. Instead, I just wrote the minimal amount of code I needed to directly make HTTP requests to the REST API endpoints for the operations I cared about.
 
-I did however have to depend on the `Microsoft.NET.Sdk.Functions` package, since it contains the types and attributes you need to write the functions so that they can be loaded from the host.
+I did however have to depend on the `Microsoft.NET.Sdk.Functions` package, since it contains the types and attributes you need to write the Functions so that they can be loaded from the host.
 
 </section>
 
@@ -73,19 +75,19 @@ The Function app needs OAuth2 tokens from Azure Active Directory, one for each A
 
 1. Use an Azure Service Principal (SP).
 
-    Create an SP and save its `appId` and `password` in your function app's settings, along with your subscription's "tenant ID". The `appId` is the "client ID", and the `password` is the "client secret". The app uses them by sending an HTTP POST request to `https://login.microsoftonline.com/${TENANT_ID}/oauth2/token` with a URL-encoded form body that looks like:
+    Create an SP and save its `appId` and `password` in your Function app's settings, along with your subscription's "tenant ID". The `appId` is the "client ID", and the `password` is the "client secret". The app uses them by sending an HTTP POST request to `https://login.microsoftonline.com/${TENANT_ID}/oauth2/token` with a URL-encoded form body that looks like:
 
     ```
     grant_type=client_credentials&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&resource=${RESOURCE}
     ```
 
+    This is the only option for testing the Functions locally.
+
 1. Use the app's "Managed Service Identity" (MSI).
 
     There will be two environment variables set on its process named `MSI_ENDPOINT` and `MSI_SECRET`. The app sends an HTTP GET request to `${MSI_ENDPOINT}?resource=${RESOURCE}&api-verson=2017-09-01` with a `Secret` header set to `${MSI_SECRET}`.
 
-    ~~Well, I assume that's how it works, based on [the code in the `Microsoft.Azure.Services.AppAuthentication` library.](https://github.com/Azure/azure-sdk-for-net/blob/db74f3ec0b3c3c7da971acc76df04da749658321/sdk/mgmtcommon/AppAuthentication/Azure.Services.AppAuthentication/TokenProviders/MsiAccessTokenProvider.cs){ rel=nofollow } I use the Linux runtime for my Function app, and currently [MSI does not work for Linux Function apps,](https://github.com/Azure/Azure-Functions/issues/1066){ rel=nofollow } so I did not implement and test it.~~
-
-    Update 2019-08-25: MSI for Linux Function apps works now.
+    Initially, [Linux Function apps did not support MSI.](https://github.com/Azure/Azure-Functions/issues/1066){ rel=nofollow } As of 2019-08-25, they do.
 
 In either case, the app should get a `200 OK` response, with a JSON body that looks like this:
 
@@ -103,8 +105,6 @@ The value of the `RESOURCE` component depends on what Azure resource the app wan
 - For working with the Azure Management API, `RESOURCE` is `https://management.azure.com`
 
 - For working with the contents of an Azure KeyVault, `RESOURCE` is `https://vault.azure.net`. This does not apply to operations on the KeyVault itself, which are part of the management API and use the Management API `Authorization` header.
-
-- For working with blobs in an Azure Storage Account, `RESOURCE` is `https://storage.azure.com`. This does not apply to operations on the storage account itself, which are part of the management API and use the Management API `Authorization` header.
 
 See [here](https://docs.microsoft.com/en-us/rest/api/azure/){ rel=nofollow } for the official documentation of how to construct these `Authorization` headers.
 
@@ -143,7 +143,16 @@ Here are links to the REST API docs for the specific operations that the Functio
 
         The documentation is wrong about the API version. The API version must be `2018-04-02` or higher, not `2017-10-12` as the documentation suggests. If you use `2017-10-12` then the CDN API will ignore the `certificateSource` and `certificateSourceParameters` and start provisioning a "CDN managed" cert from DigiCert. (This mistake is also present in [the example in the ARM specs repository.](https://github.com/Azure/azure-rest-api-specs/blob/37fcc6d2c5e25243dd737ac5b940895de5ee47a2/specification/cdn/resource-manager/Microsoft.Cdn/stable/2017-10-12/examples/CustomDomains_EnableCustomHttpsUsingBYOC.json){ rel=nofollow })
 
-        This operation is asynchronous (returns `202 Accepted`) and can take many hours to complete, so it's possible for the function to time out waiting for it to complete. It may be sufficient to poll it for a few minutes to ensure it doesn't fail, and then assume it will eventually succeed.
+        This operation is asynchronous (returns `202 Accepted`) and can take many hours to complete, so it's possible for the Function to time out waiting for it to complete. It may be sufficient to poll it for a few minutes to ensure it doesn't fail, and then assume it will eventually succeed.
+
+
+- DNS
+
+    Use the Management API `Authorization` header for these requests.
+
+    - [Set a DNS record](https://docs.microsoft.com/en-us/rest/api/dns/recordsets/createorupdate){ rel=nofollow }
+
+    - [Delete a DNS record](https://docs.microsoft.com/en-us/rest/api/dns/recordsets/delete){ rel=nofollow }
 
 
 - KeyVault
@@ -166,23 +175,6 @@ Here are links to the REST API docs for the specific operations that the Functio
 
         It's useful to set the `contentType` to a MIME type like `appliction/octet-stream` so that the portal does not try to render it as text. Otherwise only the `value` field is required.
 
-
-- Storage Account
-
-    - [Enable / disable HTTP access to the storage account](https://docs.microsoft.com/en-us/rest/api/storagerp/storageaccounts/update){ rel=nofollow }
-
-        Set the `properties.supportsHttpsTrafficOnly` field.
-
-        Use the Management API `Authorization` header for these requests.
-
-    - [Create a blob in the storage account](https://docs.microsoft.com/en-us/rest/api/storageservices/put-blob){ rel=nofollow }
-
-        Use the Storage Account API `Authorization` header for these requests. Apart from that, set the `Content-Type` (`application/octet-stream`), `Date`, `x-ms-blob-type` (`BlockBlob`) and `x-ms-version` (`2018-03-28`) headers. Other headers are not required.
-
-    - [Delete a blob from the storage account](https://docs.microsoft.com/en-us/rest/api/storageservices/delete-blob){ rel=nofollow }
-
-        Use the Storage Account API `Authorization` header for these requests. Apart from that, set the `Date` and `x-ms-version` (`2018-03-28`) headers. Other headers are not required.
-
 </section>
 
 
@@ -193,13 +185,13 @@ Here are links to the REST API docs for the specific operations that the Functio
 <section>
 <h3 id="using-the-azure-sdks-clients">[Using the Azure SDKs / clients](#using-the-azure-sdks-clients)</h3>
 
-Support for "user managed" certs for Azure CDN is not complete in all Azure SDKs and clients.
+If you do want to use the Azure SDKs or clients to have your Azure CDN use your custom KeyVault cert, note that support for "user managed" certs is not complete in all of them.
 
-- The .Net SDK only started supporting the feature in [2019-03](https://github.com/Azure/azure-sdk-for-net/commit/2fd9988c74ccc13897246fedf1fc9a9deaa4209c){ rel=nofollow }
+- The .Net SDK only started supporting the feature in [2019-03,](https://github.com/Azure/azure-sdk-for-net/commit/2fd9988c74ccc13897246fedf1fc9a9deaa4209c){ rel=nofollow } so ensure you use a version of `Microsoft.Azure.Management.Cdn` that includes that commit.
 
-- The `Enable-AzureCdnCustomDomainHttps` PowerShell command [still does not support it.](https://github.com/Azure/azure-powershell/blob/7f036cad8c3c2ac9fa8af30c3d8e918171cd82c9/src/Cdn/Cdn/CustomDomain/EnableAzureRmCdnCustomDomainHttps.cs#L31-L60){ rel=nofollow }
+- As of 2020-03, the `Enable-AzureCdnCustomDomainHttps` PowerShell command [still does not support it.](https://github.com/Azure/azure-powershell/blob/95d013dcafdb277280e3766d13bbc423c4ff83a9/src/Cdn/Cdn/CustomDomain/EnableAzureRmCdnCustomDomainHttps.cs#L31-L60){ rel=nofollow } It only supports "CDN-managed" certs.
 
-- The `az` CLI tool does apparently support it via `az cdn custom-domain enable-https --custom-domain-https-parameters`, but does not explain how to set the `custom-domain-https-parameters` parameter. [This GitHub issue from 2019-07](https://github.com/Azure/azure-cli/issues/9894){ rel=nofollow } assumed it would be a JSON object, but ran into trouble using it anyway.
+- The `az` CLI tool has `az cdn custom-domain enable-https --custom-domain-https-parameters`, but does not explain how to set the `custom-domain-https-parameters` parameter. [This GitHub issue from 2019-07](https://github.com/Azure/azure-cli/issues/9894){ rel=nofollow } assumed it would be a JSON object, but ran into trouble using it anyway. As of 2020-03, it is apparently being worked on.
 
 If you do use an SDK or client, make sure it doesn't end up using the "CDN managed" certs, either because it doesn't let you specify KeyVault certificate source parameters, or because it internally uses an API version lower than `2018-04-02`
 
@@ -207,11 +199,11 @@ If you do use an SDK or client, make sure it doesn't end up using the "CDN manag
 
 
 <section>
-<h3 id="why-use-the-linux-runtime-for-the-function-app">[Why use the Linux runtime for the Function app?](#why-use-the-linux-runtime-for-the-function-app)</h3>
+<h3 id="why-use-the-linux-runtime-for-the-function-apps">[Why use the Linux runtime for the Function apps?](#why-use-the-linux-runtime-for-the-function-apps)</h3>
 
-When the Function app receives the cert from Let's Encrypt, it combines the cert with the private key and uploads it to the KeyVault. Then it tells the CDN to use this cert.
+When the `Acme` Function app receives the cert from Let's Encrypt, it combines the cert with the private key and uploads it to the KeyVault. Then it tells the CDN to use this cert.
 
-When I was coding up the Function app, I was doing it on Windows. I had no problem with combining and uploading the cert to the KeyVault, but the CDN API to make CDN use the cert would fail. To be sure, I also did it manually from the Azure Portal, and it failed in the same way:
+When I was initially coding up the Function app, I was doing it on Windows. I had no problem with combining and uploading the cert to the KeyVault, but the CDN API to make CDN use the cert would fail. To be sure, I also did it manually from the Azure Portal, and it failed in the same way:
 
 >The server (leaf) certificate doesn't include a private key or the size of the private key is smaller than the minimum requirement.
 
@@ -227,7 +219,7 @@ There was one more red herring in the subsequent back-and-forth between me and t
 
 >Verify the uploaded certificate is a KeyVault Secret, not a KeyVault Certificate
 
-... as if implying that CDN does not support using KeyVault certificates, only secrets. But I did not believe this, since even [CDN's own documentation for user-managed certificates](https://docs.microsoft.com/en-us/azure/cdn/cdn-custom-ssl?tabs=option-2-enable-https-with-your-own-certificate){ rel=nofollow } explicitly talks about using KeyVault certificates.
+... as if implying that CDN does not support using KeyVault certificates, only secrets. But I did not believe this, since even [CDN's own documentation for user-managed certificates](https://docs.microsoft.com/en-us/azure/cdn/cdn-custom-ssl?tabs=option-2-enable-https-with-your-own-certificate){ rel=nofollow } explicitly talks about using KeyVault certificates. (The KeyVault certificate object obviously does not contain the private key that Azure CDN would need to serve HTTPS, but every certificate that's uploaded to KeyVault also implicitly creates a KeyVault secret that holds the full certificate, including its private key. The KeyVault certificate object contains a reference to this KeyVault secret object, and Azure CDN uses this to determine the KeyVault secret.)
 
 Eventually they realized the issue was that the private key in the cert was not marked "exportable", so even though it existed CDN was not able to access it. This is apparently a Windows-specific feature that works by adding [an `msPKI-Private-Key-Flag` attribute to the private key, that contains a `CT_FLAG_EXPORTABLE_KEY` flag.](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-crtd/f6122d87-b999-4b92-bff8-f465e8949667){ rel=nofollow } Windows and Windows tooling checks for the presence of this attribute and flag, and artificially rejects access to the private key if the flag is unset.
 
@@ -238,22 +230,6 @@ I thought about using a third-party library, but [`BouncyCastle`](https://www.nu
 Since this is a Windows-specific attribute and only artificially prevents accessing the private key, I figured that non-Windows tooling would not have this problem. Indeed, openssl ignores the attribute and can export the key just fine, which is why my nginx server had no problem using the cert despite the "non-exportable" private key. Furthermore, .Net Core uses openssl to implement the `System.Security.Cryptography` API on Linux, and I confirmed that CDN was able to use the cert just fine when I generated it with `RSACertificateExtensions.CopyWithPrivateKey` on Linux.
 
 So I decided to not waste any more time figuring out the right incantation of API to make it work on Windows, and settled on using the Linux runtime for the Function app.
-
-</section>
-
-
-<section>
-<h3 id="do-not-use-multiple-linux-function-apps-with-the-same-storage-account">[Do not use multiple Linux Function apps with the same storage account](#do-not-use-multiple-linux-function-apps-with-the-same-storage-account)</h3>
-
-A Function app uses a storage account for its bookkeeping. If you have multiple websites, you might have multiple Function apps, all with the same code but different settings. In this situation you may be tempted to have them all use the same storage account.
-
-For Windows Function apps, each Function app's instance uses a unique name for itself derived from the Function app's name, so the instances of multiple Function apps can indeed co-exist in the same storage account just fine.
-
-Unfortunately there is a bug with the way Azure deploys Linux Function apps that causes the Function app instances to derive their name differently. Instead of using the Function app name, they use the host machine name plus a hash of the path to their code entrypoint (the .Net DLL containing the function code). Furthermore, all host machines have the same machine name `(none)`, which gets sanitized into `none`. This means that if two Function apps have the same code, their instances will end up with the same name and clobber each other's data in the shared storage account.
-
-It can lead to strange behavior like timer triggers not firing because the trigger firing in one app's instance convinces the other app's instance that *its* trigger already completed successfully. See [this GitHub issue from 2019-05](https://github.com/Azure/azure-functions-host/issues/4499){ rel=nofollow } for more details. Unfortunately the repo has hundreds of unacknowledged issues so I assume it has not been noticed.
-
-Hopefully it will be fixed before Linux Function apps become GA. Until then, do not configure more than one Linux Function app with the same storage account.
 
 </section>
 

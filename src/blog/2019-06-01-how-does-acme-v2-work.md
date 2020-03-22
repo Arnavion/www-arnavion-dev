@@ -325,6 +325,8 @@ To complete a pending authorization, the client chooses one of its challenges an
 
 	See [Extra: Fulfilling an http-01 challenge](#extra-fulfilling-an-http-01-challenge) for how to fulfill an http-01 challenge.
 
+	See [Extra: Fulfilling a dns-01 challenge](#extra-fulfilling-a-dns-01-challenge) for how to fulfill a dns-01 challenge.
+
 - If the challenge is in the `"processing"` state, the client has previously posted to the challenge URL. The server is still verifying the challenge, so the client should continue to poll the challenge URL.
 
 - If the challenge is in the `"valid"` state, the client has previously posted to the challenge URL and the server has verified the challenge successfully. There is nothing more for the client to do with this challenge.
@@ -390,7 +392,7 @@ If the order is in the `"valid"` state, the order has been completed. The order 
 
 - The `certificate` value is a string representing the URL of the signed certificate.
 
-The client downloads the certificate from this URL and ends the order workflow. It combines this certificate with the private key of the CSR it had generated previously, and begins using it for its webserver.
+The client downloads the certificate from this URL using a POST-as-GET request. It combines this certificate with the private key of the CSR it had generated previously, and begins using it for its webserver. This is the end of the order workflow.
 
 </section>
 
@@ -417,5 +419,21 @@ Also note that it is required to use SHA-256 for the hash operation, not the key
 The client then takes the challenge token, appends an ASCII `. (U+002E)`, then appends the "JWK thumbprint". This resulting string encoded to UTF-8 bytes becomes the content of the challenge response. The URL of the challenge response is `/.well-known/acme-challenge/$(challenge.token)`
 
 http-01 challenges are described in [section 8.3 HTTP Challenge of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.8.3){ rel=nofollow }
+
+</section>
+
+
+<section>
+<h2 id="extra-fulfilling-a-dns-01-challenge">[Extra: Fulfilling a dns-01 challenge](#extra-fulfilling-a-dns-01-challenge)</h2>
+
+To fulfill a dns-01 challenge, the client instructs the DNS server that responds for the domain to serve a specific TXT record with certain content. The name of the TXT record is `_acme-challenge.$domain`. Its text content is derived from the challenge properties and is thus unique to that particular challenge. To verify the challenge, the ACME server queries the TXT record and verifies that it has the content it expected. Being able to instruct the DNS server in this way counts as proof that the client owns the domain.
+
+Similar to the http-01 challenge process described above, the client constructs a string by taking the challenge token and appending an ASCII `. (U+002E)` and the "JWK thumbprint" to it. This resulting string becomes the contents of the TXT record.
+
+dns-01 challenges are described in [section 8.4 DNS Challenge of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.8.4){ rel=nofollow }
+
+Unlike an http-01 challenge, a dns-01 challenge can be used for arbitrary non-HTTP endpoints that need to serve TLS. dns-01 challenges are also the only kind of challenge that Let's Encrypt accepts when requesting certs for a wildcard domain. (For a wildcard domain order like `*.example.org`, the TXT record that the server will resolve is `_acme-challenge.example.org`
+
+You will of course need a programmable DNS server so that the ACME client can dynamically modify the `_acme-challenge.$domain` DNS record. If your domain's DNS server does not allow such programmatic access, you can set up a separate programmable DNS server just for the `_acme-challenge.$domain` record, and manually configure an NS record for `_acme-challenge.$domain` in your domain's DNS server to point to your programmable one.
 
 </section>
