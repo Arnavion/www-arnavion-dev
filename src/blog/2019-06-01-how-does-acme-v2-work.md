@@ -11,14 +11,14 @@ I'll write more details about the Azure setup later. For now, I want to share wh
 <section>
 <h2 id="introduction">[Introduction](#introduction)</h2>
 
-The ACME v2 protocol is still in draft RFC status as of this writing. It also uses concepts from other RFCS.
+The ACME v2 protocol is defined in an RFC, and also uses concepts from other RFCS:
 
 - [RFC 4648 - The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648){ rel=nofollow }
 - [RFC 7517 - JSON Web Signature](https://tools.ietf.org/html/rfc7515){ rel=nofollow }
 - [RFC 7517 - JSON Web Key](https://tools.ietf.org/html/rfc7517){ rel=nofollow }
 - [RFC 7518 - JSON Web Algorithms (JWA)](https://tools.ietf.org/html/rfc7518){ rel=nofollow }
 - [RFC 7638 - JSON Web Key (JWK) Thumbprint](https://tools.ietf.org/html/rfc7638){ rel=nofollow }
-- [RFC Draft - Automatic Certificate Management Environment (ACME)](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html){ rel=nofollow }
+- [RFC 8555 - Automatic Certificate Management Environment (ACME)](https://tools.ietf.org/html/rfc8555){ rel=nofollow }
 
 You don't have to read them in their entirety before you start, but it helps to have them open for reference. I will link to the relevant sections of the RFCs where necessary.
 
@@ -32,7 +32,7 @@ The A in ACME stands for Automatic, and indeed the great thing about the protoco
 <section>
 <h2 id="create-an-account-key">[Create an account key](#create-an-account-key)</h2>
 
-All interactions with the server other than the directory request and the "new nonce" request are authenticated. The client generates an account key in one of the formats supported by the server based on [section 3.1 "alg" (Algorithm) Header Parameter Values for JWS in the JSON Web Algorithm RFC](https://tools.ietf.org/html/rfc7518#section-3.1){ rel=nofollow } with restrictions as noted in [section 6.2 Request Authentication of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.6.2){ rel=nofollow } The client uses this key to sign its requests using the JSON Web Signature RFC.
+All interactions with the server other than the directory request and the "new nonce" request are authenticated. The client generates an account key in one of the formats supported by the server based on [section 3.1 "alg" (Algorithm) Header Parameter Values for JWS in the JSON Web Algorithm RFC](https://tools.ietf.org/html/rfc7518#section-3.1){ rel=nofollow } with restrictions as noted in [section 6.2 Request Authentication of the ACME RFC.](https://tools.ietf.org/html/rfc8555#section-6.2){ rel=nofollow } The client uses this key to sign its requests using the JSON Web Signature RFC.
 
 Check your ACME server provider's documentation for the keys it supports. In the case of Let's Encrypt, the strongest format it supports (as of this writing) are ECDSA P-384 keys. The rest of this document will use these keys for the examples.
 
@@ -58,7 +58,7 @@ The server responds to the directory request with a `200 OK` response. This resp
 - The `newNonce` value is the "new nonce" URL.
 - The `newOrder` value is the "new order" URL.
 
-The directory response is described in [section 7.1.1 Directory of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.7.1.1){ rel=nofollow }
+The directory response is described in [section 7.1.1 Directory of the ACME RFC.](https://tools.ietf.org/html/rfc8555#section-7.1.1){ rel=nofollow }
 
 </section>
 
@@ -84,7 +84,7 @@ All interactions with the server other than the directory request and the "new n
 
 The client starts with the payload that it wants to send. This might be an empty payload, or it might be an object. In the latter case, the client serializes the object to a JSON string, then encodes the string using the encoding described in [section 5 Base 64 Encoding with URL and Filename Safe Alphabet of RFC 4648.](https://tools.ietf.org/html/rfc4648#section-5){ rel=nofollow } This is now the "encoded payload".
 
-It is important to note that the payload can be empty, which means the "encoded payload" is the empty string. The HTTP POST request still has a request body, since this empty "encoded payload" is still wrapped in a JWS envelope as described below. Specifically, the payload is empty in what the ACME RFC calls "POST-as-GET" requests, which refers to requests that get the current status of an object like a REST GET request would, but are nevertheless sent as POST requests with a JWS body. See [section 6.3 GET and POST-as-GET Requests of the ACME RFC](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.6.3){ rel=nofollow } for more details.
+It is important to note that the payload can be empty, which means the "encoded payload" is the empty string. The HTTP POST request still has a request body, since this empty "encoded payload" is still wrapped in a JWS envelope as described below. Specifically, the payload is empty in what the ACME RFC calls "POST-as-GET" requests, which refers to requests that get the current status of an object like a REST GET request would, but are nevertheless sent as POST requests with a JWS body. See [section 6.3 GET and POST-as-GET Requests of the ACME RFC](https://tools.ietf.org/html/rfc8555#section-6.3){ rel=nofollow } for more details.
 
 Note that the URL-safe base64 encoding is the only kind of encoding used in the entire client workflow. Future references to base64 encoding in this document will refer to this same URL-safe encoding.
 
@@ -201,7 +201,7 @@ The body of the response contains a JSON object representing the account, like t
 
 - The `status` value is the state of the account, and must be the value `"valid"` to be able to proceed.
 
-The response is described in full detail in [section 7.1.2 Account Objects of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.7.1.2){ rel=nofollow }
+The response is described in full detail in [section 7.1.2 Account Objects of the ACME RFC.](https://tools.ietf.org/html/rfc8555#section-7.1.2){ rel=nofollow }
 
 The response also contains a `Location` header that contains the "account URL". This account URL uniquely identifies the account, and is used in all future requests as the `kid` value of the "protected header". Thus the client must save it in its state.
 
@@ -243,7 +243,7 @@ The body of this response contains a JSON object representing the order, like th
 
 - The `status` value represents the state of the order, and is used to determine how to proceed.
 
-The response is described in full detail in [section 7.1.3 Order Objects of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.7.1.3){ rel=nofollow }
+The response is described in full detail in [section 7.1.3 Order Objects of the ACME RFC.](https://tools.ietf.org/html/rfc8555#section-7.1.3){ rel=nofollow }
 
 - If the order is in the `"pending"` state, the server is waiting for the client to complete the authorizations of the order. The client handles the order as described in the [The order is `"pending"`](#the-order-is-pending) section below.
 
@@ -255,7 +255,7 @@ The response is described in full detail in [section 7.1.3 Order Objects of the 
 
 - If the order is in the `"invalid"` state, the server has rejected the order. The client should abort the order workflow.
 
-Creating an order is described in [section 7.4 Applying for Certificate Issuance of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.7.4){ rel=nofollow } The change of state of an order object is described in [section 7.1.6 Status Changes of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.7.1.6.p.4){ rel=nofollow }
+Creating an order is described in [section 7.4 Applying for Certificate Issuance of the ACME RFC.](https://tools.ietf.org/html/rfc8555#section-7.4){ rel=nofollow } The change of state of an order object is described in [section 7.1.6 Status Changes of the ACME RFC.](https://tools.ietf.org/html/rfc8555#section-7.1.6){ rel=nofollow }
 
 </section>
 
@@ -311,7 +311,7 @@ The client fetches the authorization object by performing a POST-as-GET request 
 
 - The value of the `status` key of the object in the response body represents the state of the order, and is used to determine how to proceed.
 
-The authorization object is described in full detail in [section 7.1.4 Authorization Objects of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.7.1.4){ rel=nofollow }
+The authorization object is described in full detail in [section 7.1.4 Authorization Objects of the ACME RFC.](https://tools.ietf.org/html/rfc8555#section-7.1.4){ rel=nofollow }
 
 - If the authorization is in the `"pending"` state, it is waiting for the client to fulfill at least one challenge of the order.
 
@@ -335,7 +335,7 @@ To complete a pending authorization, the client chooses one of its challenges an
 
 Note that it is possible for the challenge to remain in the `"pending"` state for a short period of time after the client has posted to the challenge URL, rather than immediately moving to `"processing"` state. If the client knows that it has already posted to the challenge URL, it should treat this just like if the challenge was in the `"processing"` state and continue polling the challenge URL, waiting for it to change state. (This behavior appears to violate the RFC, but is displayed by Let's Encrypt.)
 
-The change of state of an authorization object is described in [section 7.1.6 Status Changes of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.7.1.6.p.3){ rel=nofollow } The change of state of a challenge object is described in [section 7.1.6 Status Changes of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.7.1.6.p.2){ rel=nofollow }
+The change of state of authorization and challenge objects is described in [section 7.1.6 Status Changes of the ACME RFC.](https://tools.ietf.org/html/rfc8555#section-7.1.6){ rel=nofollow }
 
 Once the client observes that the challenge is in the `"valid"` state, it polls the authorization at the authorization URL till the authorization too reaches the `"valid"` state, as described above.
 
@@ -418,7 +418,7 @@ Also note that it is required to use SHA-256 for the hash operation, not the key
 
 The client then takes the challenge token, appends an ASCII `. (U+002E)`, then appends the "JWK thumbprint". This resulting string encoded to UTF-8 bytes becomes the content of the challenge response. The URL of the challenge response is `/.well-known/acme-challenge/$(challenge.token)`
 
-http-01 challenges are described in [section 8.3 HTTP Challenge of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.8.3){ rel=nofollow }
+http-01 challenges are described in [section 8.3 HTTP Challenge of the ACME RFC.](https://tools.ietf.org/html/rfc8555#section-8.3){ rel=nofollow }
 
 </section>
 
@@ -430,7 +430,7 @@ To fulfill a dns-01 challenge, the client instructs the DNS server that responds
 
 Similar to the http-01 challenge process described above, the client constructs a string by taking the challenge token and appending an ASCII `. (U+002E)` and the "JWK thumbprint" to it. This resulting string becomes the contents of the TXT record.
 
-dns-01 challenges are described in [section 8.4 DNS Challenge of the ACME RFC.](https://ietf-wg-acme.github.io/acme/draft-ietf-acme-acme.html#rfc.section.8.4){ rel=nofollow }
+dns-01 challenges are described in [section 8.4 DNS Challenge of the ACME RFC.](https://tools.ietf.org/html/rfc8555#section-8.4){ rel=nofollow }
 
 Unlike an http-01 challenge, a dns-01 challenge can be used for arbitrary non-HTTP endpoints that need to serve TLS. dns-01 challenges are also the only kind of challenge that Let's Encrypt accepts when requesting certs for a wildcard domain. (For a wildcard domain order like `*.example.org`, the TXT record that the server will resolve is `_acme-challenge.example.org`
 
