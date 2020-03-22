@@ -15,7 +15,14 @@ zypper in --no-recommends pandoc sassc
 ```
 
 
-# Deploy
+# Deploy locally
+
+```sh
+python3 -m http.server 8080 -d out
+```
+
+
+# Deploy to Azure
 
 ```sh
 AZURE_RESOURCE_GROUP_NAME='www-arnavion-dev'
