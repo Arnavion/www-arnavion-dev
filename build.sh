@@ -148,3 +148,7 @@ $blog_rss_content
 </rss>
 "
 printf '%s' "$blog_rss_content" > out/blog/index.xml
+
+grep -R '<a href="http' out/ | grep -v 'nofollow' | sed -e 's/^/Missing nofollow: /' && exit 1 || :
+
+echo 'OK'
