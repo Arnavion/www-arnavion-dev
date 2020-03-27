@@ -104,13 +104,15 @@ So just like the `sysctl` binary output could be made easier to parse by `od` or
 
 However, my pfSense install *does* also have `jq`, because it's a dependency of the `pfBlockerNG-devel` package which I also use. So I decided using it doesn't violate my "don't manually install any additional packages" constraint.
 
+`smartctl` does not use `libxo`, but does have the ability to emit JSON via the `-j` flag.
+
 </section>
 
 
 <section>
 <h3 id="scraping-text">[Scraping text](#scraping-text)</h3>
 
-Other commands like `clog`, `ifconfig` and `smartctl` do not use libxo, so the script still has to scrape their human-readable text output.
+Other commands like `clog` and `ifconfig` do not use libxo, so the script still has to scrape their human-readable text output.
 
 </section>
 
