@@ -52,13 +52,13 @@ I then tried shell, and hit two snags:
 
 I did manage to implement the dashboard in POSIX `sh`; however its CPU usage was quite high for my taste. This was mostly because almost all the commands I was shelling out to had to be further processed using `cut` or `grep` or `sed` or `awk`, so there were a lot of processes being created and lots of strings being sliced and diced every time the dashboard refreshed.
 
-I initially set about replacing some of the `cut`s and `grep`s and `sed`s with `awk`. But then I realized I could just as well write the whole dashboard as a single AWK script and not bother with POSIX `sh` at all.
-
-The result is at [pfsense-dashboard-cli](https://github.com/Arnavion/pfsense-dashboard-cli){ rel=nofollow } and I'm quite satisfied with it.
+I initially set about replacing some of the `cut`s and `grep`s and `sed`s with `awk`. But then I realized I could just as well write the whole dashboard as a single AWK script and not bother with POSIX `sh` at all. The result is at [pfsense-dashboard-cli](https://github.com/Arnavion/pfsense-dashboard-cli/tree/9ee00b89a20fd88aaede4d53d36100fbe68f1439){ rel=nofollow } and I was quite satisfied with it.
 
 It does have a dependency on `perl` to get the current time in seconds from the Unix epoch. This is because FreeBSD's `date` does not have a way to get milliseconds in the time, which is important for refreshing the dashboard once every second, which in turn is important for getting accurate network usage numbers (`(current bytes - previous bytes) / (current iteration time - previous iteration time)`; losing milliseconds in the denominator can introduce large errors in the result).
 
 Note that `perl` is not part of a base FreeBSD install, as HN users pointed out [here](https://news.ycombinator.com/item?id=21567675){ rel=nofollow } and [here.](https://news.ycombinator.com/item?id=21568087){ rel=nofollow } However pfSense pulls it in as a dependency and it is thus available on a default pfSense install, so it doesn't violate my "don't manually install any additional packages" constraint.
+
+You may have noticed that the link to the `awk` script is a specific git rev. That's because I did eventually end up rewriting it in Rust after all, which is what's in git master. What I wrote above, about it being difficult / impossible to build a Rust binary that would run on the router, still holds. Instead, the program runs on the client, and uses ssh to invoke the same commands that the `awk` script used to. However being written in Rust gives it the advantage of being able to use the `libssh` library (via the `ssh2` crate) to send multiple commands over the same SSH connection and interlave its own processing with them; something a shell script or `awk` script would not be able to do with the ssh CLI. JSON-parsing and string-splicing is also more robust in Rust compared to `awk`, and off-loading all this processing to the client also greatly reduced the router's CPU usage.
 
 </section>
 
