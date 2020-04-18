@@ -114,6 +114,14 @@ del {
 	filter: brightness(80%);
 }
 
+code.sourceCode.diff span.st {
+	color: red;
+}
+
+code.sourceCode.diff span.va {
+	color: green;
+}
+
 /*
 Firefox's reader mode stupidly picks the first element that contains the string "author" in its text content,
 and moves it from its right place in the page to the top as a byline.
