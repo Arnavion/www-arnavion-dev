@@ -152,3 +152,72 @@ printf '%s' "$blog_rss_content" > out/blog/index.xml
 grep -R '<a href="http' out/ | grep -v 'nofollow' | sed -e 's/^/Missing nofollow: /' && exit 1 || :
 
 echo 'OK'
+
+
+if [ "${1:-}" = 'publish' ]; then
+	AZURE_RESOURCE_GROUP_NAME='arnavion-dev'
+	AZURE_STORAGE_ACCOUNT_NAME='wwwarnaviondev'
+	AZURE_CDN_PROFILE_NAME='arnavion-dev'
+	AZURE_CDN_ENDPOINT_NAME='www-arnavion-dev'
+
+	AZURE_STORAGE_ACCOUNT_CONNECTION_STRING="$(
+		az storage account show-connection-string \
+			--resource-group "$AZURE_RESOURCE_GROUP_NAME" --name "$AZURE_STORAGE_ACCOUNT_NAME" \
+			--query connectionString --output tsv
+	)"
+
+	# Strip trailing newline to match the HTML output
+	css_sha256="$(<<< "$css" head -c -1 | openssl dgst -binary -sha256 | base64 -w 0)"
+
+	cdn_endpoint_delivery_policy_rules="$(jq --null-input --compact-output \
+		--arg CSP "default-src 'none'; style-src 'sha256-$css_sha256'" \
+		'[{
+			"order": 1,
+			"name": "EnforceHTTPS",
+			"conditions": [{
+				"name": "RequestScheme",
+				"parameters": { "matchValues": ["HTTP"] }
+			}],
+			"actions": [{
+				"name": "UrlRedirect",
+				"parameters": {
+					"destinationProtocol": "Https",
+					"redirectType": "PermanentRedirect"
+				}
+			}]
+		}, {
+			"order": 2,
+			"name": "AddCSPHeader",
+			"conditions": [{
+				"name": "RequestUri",
+				"parameters": { "operator": "Any", "matchValues": [] }
+			}],
+			"actions": [{
+				"name": "ModifyResponseHeader",
+				"parameters": {
+					"headerAction": "Append",
+					"headerName": "content-security-policy",
+					"value": $CSP
+				}
+			}]
+		}]'
+	)"
+
+	az storage blob delete-batch \
+		--connection-string "$AZURE_STORAGE_ACCOUNT_CONNECTION_STRING" \
+		--source '$web' \
+		--verbose
+
+	az storage blob upload-batch \
+		--connection-string "$AZURE_STORAGE_ACCOUNT_CONNECTION_STRING" \
+		--source "$PWD/out" --destination '$web' --type block \
+		--verbose
+
+	az cdn endpoint update \
+		--resource-group "$AZURE_RESOURCE_GROUP_NAME" --profile-name "$AZURE_CDN_PROFILE_NAME" --name "$AZURE_CDN_ENDPOINT_NAME" \
+		--set "deliveryPolicy.rules=$cdn_endpoint_delivery_policy_rules"
+
+	az cdn endpoint purge \
+		--resource-group "$AZURE_RESOURCE_GROUP_NAME" --profile-name "$AZURE_CDN_PROFILE_NAME" --name "$AZURE_CDN_ENDPOINT_NAME" \
+		--content-paths '/*'
+fi
