@@ -34,6 +34,9 @@ rm -rf out
 mkdir -p out
 
 
+cp -R src/.well-known out/
+
+
 # CSS
 css="$(sassc --style compressed src/style.scss)"
 
@@ -172,6 +175,25 @@ if [ "${1:-}" = 'publish' ]; then
 	cdn_endpoint_delivery_policy_rules="$(jq --null-input --compact-output \
 		--arg CSP "default-src 'none'; style-src 'sha256-$css_sha256'" \
 		'[{
+			"order": 0,
+			"name": "Global",
+			"conditions": [],
+			"actions": [{
+				"name": "ModifyResponseHeader",
+				"parameters": {
+					"headerAction": "Append",
+					"headerName": "access-control-allow-origin",
+					"value": "*"
+				}
+			}, {
+				"name": "ModifyResponseHeader",
+				"parameters": {
+					"headerAction": "Append",
+					"headerName": "content-security-policy",
+					"value": $CSP
+				}
+			}]
+		}, {
 			"order": 1,
 			"name": "EnforceHTTPS",
 			"conditions": [{
@@ -183,21 +205,6 @@ if [ "${1:-}" = 'publish' ]; then
 				"parameters": {
 					"destinationProtocol": "Https",
 					"redirectType": "PermanentRedirect"
-				}
-			}]
-		}, {
-			"order": 2,
-			"name": "AddCSPHeader",
-			"conditions": [{
-				"name": "RequestUri",
-				"parameters": { "operator": "Any", "matchValues": [] }
-			}],
-			"actions": [{
-				"name": "ModifyResponseHeader",
-				"parameters": {
-					"headerAction": "Append",
-					"headerName": "content-security-policy",
-					"value": $CSP
 				}
 			}]
 		}]'
