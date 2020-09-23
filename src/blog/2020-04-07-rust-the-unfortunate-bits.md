@@ -76,21 +76,37 @@ All of these things *could* be resolved in a Rust "2.0", ie a release that is al
 
 # These can't be changed, but they can be deprecated in favor of new alternatives
 
-- <a href="#option-intoiterator" id="option-intoiterator">`#option-intoiterator`</a> The [`Option`](https://doc.rust-lang.org/stable/std/option/enum.Option.html){ rel=nofollow } type impls [`IntoIterator`](https://doc.rust-lang.org/stable/std/iter/trait.IntoIterator.html){ rel=nofollow }, ie it's convertible to an `Iterator` that yields zero or one elements (if it was `None` or `Some` respectively). Functional language users will find this familiar, since `Option` / `Maybe` being convertible to a sequence of zero or one elements is common in those languages. The problem with Rust's approach is that the `IntoIterator` trait is implicitly used by for-loops, so it's possible to write code like this:
+- <a href="#result-option-intoiterator" id="result-option-intoiterator">`#result-option-intoiterator`</a> The [`Result`](https://doc.rust-lang.org/stable/std/result/enum.Result.html){ rel=nofollow } type impls [`IntoIterator`](https://doc.rust-lang.org/stable/std/iter/trait.IntoIterator.html){ rel=nofollow }, ie it's convertible to an `Iterator` that yields zero or one elements (if it was `Err` or `Ok` respectively). Functional language users will find this familiar, since `Either` being convertible to a sequence of zero (`Left`) or one (`Right`) elements is common in those languages. The problem with Rust's approach is that the `IntoIterator` trait is implicitly used by for-loops.
+
+    Let's say you want to enumerate the entries of the `/` directory. You might start with this:
+
+    ```rust
+    for entry in std::fs::read_dir("/") {
+        println!("found {:?}", entry);
+    }
+    ```
+
+    But rather than printing the contents of `/`, this will print just one line that reads `found ReadDir("/")`. `ReadDir` here refers to `std::fs::ReadDir`, which is the iterator of directory entries returned by `std::fs::read_dir`. But why is the loop variable `entry` receiving the whole iterator instead of the elements of the iterator? The reason is that `read_dir` actually returns a `Result<std::fs::ReadDir, std::io::Error>`, so the loop actually needs to be written like `for entry in std::fs::read_dir("/")? {`; notice the `?` at the end.
+
+    Of course, this only happens to compile because `println!("{:?}")` is an operation that can be done on both `Result<ReadDir>` and `Result<DirEntry>`. Other things that could successfully compile are serialization, and converting to `std::any::Any` trait objects. Otherwise, if you actually tried to use `entry` like a `Result<DirEntry>`, you would likely get compiler errors, which would at least prevent bad programs though they might still be confusing.
+
+    This problem wouldn't have happened if `Result` had a dedicated function to convert to an `Iterator` instead of implementing `IntoIterator`. It could be solved by adding this new function and deprecating the existing `IntoIterator` impl, though at this point the compiler does not support deprecating trait impls.
+
+    The [`Option`](https://doc.rust-lang.org/stable/std/option/enum.Option.html){ rel=nofollow } type also has the same problem since it also impls [`IntoIterator`](https://doc.rust-lang.org/stable/std/iter/trait.IntoIterator.html){ rel=nofollow }, ie it's convertible to an `Iterator` that yields zero or one elements (if it was `None` or `Some` respectively). Again, this mimics functional languages where `Option` / `Maybe` are convertible to a sequence of zero or one elements. But again, the implicit use of `IntoIterator` with for-loops in Rust leads to problems with code like this:
 
     ```rust
     let map: HashMap<Foo, Vec<Bar>> = ...;
     let values = map.get(&some_key);
     for value in values {
-        baz(value);
+        println!("{:?}", value);
     }
     ```
 
-    The intent of this code is to apply the `baz` function to every `Bar` in the map corresponding to the key `some_key`. Unfortunately `map.get` returns not a `&Vec<Bar>` but an `Option<&Vec<Bar>>`, which means `value` inside the loop is actually a `&Vec<Bar>`. As a result, you get an "expected `&Bar`, found `&Vec<Bar>`" error that might be confusing ("I'm iterating over the `Vec`. Why is the loop variable also a `Vec` ?"). If `baz` happens to be polymorphic in a way that it works with both `&Bar` and `&Vec<Bar>` parameters, then it might lead to an even more confusing error (say because `Vec<Bar>` doesn't impl some trait that `Bar` does and `baz` requires), or even compile successfully but misbehave at runtime (say because both implement `Debug` or `std::any::Any`).
+    The intent of this code is to print every `Bar` in the map corresponding to the key `some_key`. Unfortunately `map.get` returns not a `&Vec<Bar>` but an `Option<&Vec<Bar>>`, which means `value` inside the loop is actually a `&Vec<Bar>`. As a result, it prints all the `Bar`s in a single line like a slice instead of one `Bar` per line.
 
-    This problem wouldn't have happened if `Option` had a dedicated function to convert to an `Iterator` instead of `IntoIterator`. It could be solved by adding this new function and deprecating the existing `IntoIterator` impl, though at this point the compiler does not support deprecating trait impls.
+    This problem wouldn't have happened if `Option` had a dedicated function to convert to an `Iterator` instead of implementing `IntoIterator`.
 
-    At least clippy has [a lint for it.](https://rust-lang.github.io/rust-clippy/master/index.html#for_loops_over_fallibles){ rel=nofollow }
+    At least clippy has [a lint for this.](https://rust-lang.github.io/rust-clippy/master/index.html#for_loops_over_fallibles){ rel=nofollow }
 
 
 - <a href="#insert-unit" id="insert-unit">`#insert-unit`</a> All the libstd collection methods that insert elements into the collection return `()` or some other value that is unrelated to the element that was just inserted. This means if you write code that inserts the value and then wants to do something with the inserted value, you have to do a separate lookup to get the value you just inserted. For example:
