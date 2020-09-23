@@ -210,10 +210,13 @@ if [ "${1:-}" = 'publish' ]; then
 		}]'
 	)"
 
-	az storage blob delete-batch \
-		--connection-string "$AZURE_STORAGE_ACCOUNT_CONNECTION_STRING" \
-		--source '$web' \
-		--verbose
+	for prefix in '.well-known/' 'index.html' 'blog/'; do
+		az storage blob delete-batch \
+			--connection-string "$AZURE_STORAGE_ACCOUNT_CONNECTION_STRING" \
+			--source '$web' \
+			--pattern "$prefix*" \
+			--verbose
+	done
 
 	az storage blob upload-batch \
 		--connection-string "$AZURE_STORAGE_ACCOUNT_CONNECTION_STRING" \
