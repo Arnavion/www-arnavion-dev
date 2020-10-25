@@ -9,7 +9,7 @@ The tl;dr is that everything was pretty much turn-key, except for getting Docker
 
 
 <section>
-<h2 id="the-ipv4-setup">[The IPv4 setup](#the-ipv4-setup)</a></h2>
+## The IPv4 setup
 
 This is my existing IPv4 setup. I've labeled the interfaces with their names (`em0` and `igb*` for the router, `enp*` for the computers, etc):
 
@@ -59,7 +59,7 @@ Note that publicly routable doesn't mean publicly *reachable*. The router would 
 
 
 <section>
-<h2 id="interlude">[Interlude](#interlude)</h2>
+## Interlude
 
 (This section explains basic IPv6 terminology and prefix delegation. Skip to the next section if you already know this.)
 
@@ -67,11 +67,11 @@ An IPv6 address is made up of eight segments, where each segment is a 16-bit val
 
 Just like IPv4, a range of addresses is represented with CIDR notation. The `2001:db8::/32` range is reserved for examples, which is why I'll use it throughout this post.
 
-Devices that want to get addresses from a router send out solicitation requests, to which the router responds by advertising itself using Router Advertisement (RA) messages. The RA message contains the information about the DHCPv6 server, if one exists on the network. The devices may then get addresses from the DHCPv6 server, which may be static or random, or they may use [SLAAC](https://en.wikipedia.org/wiki/IPv6_address#Stateless_address_autoconfiguration){ rel=nofollow } to construct addresses for themselves based on the prefix advertised in the RA message plus their MAC address.
+Devices that want to get addresses from a router send out solicitation requests, to which the router responds by advertising itself using Router Advertisement (RA) messages. The RA message contains the information about the DHCPv6 server, if one exists on the network. The devices may then get addresses from the DHCPv6 server, which may be static or random, or they may use [SLAAC](https://en.wikipedia.org/wiki/IPv6_address#Stateless_address_autoconfiguration) to construct addresses for themselves based on the prefix advertised in the RA message plus their MAC address.
 
 When it comes to the mechanism of how routers talk to gateways (upstream routers), it's worth differentiating between link prefixes and routing prefixes. The router first gets an IP for itself from the gateway, say `2001:db8:0:1:2:3:4:5/64`. This IP is called the link prefix, and the /64 here just represents the length of the prefix. The router then requests the gateway to delegate another range of addresses to it that it can serve them to its downstream devices. The gateway might decide to give `2001:db8:0:2::/64` to the router. This is the routed prefix. The gateway only needs to remember that all traffic for all addresses in the `2001:db8:0:2::/64` range should be routed to the router at `2001:db8:0:1:2:3:4:5`; it does not need to store individual routes for addresses within that range. This process where a device obtains a routed prefix from an upstream router so that it can itself act as a router is called prefix delegation.
 
-When subnetting IPv6, one usually does not make subnets smaller than /64. Within a /64, the router and the devices can discover each other using [NDP.](https://en.wikipedia.org/wiki/Neighbor_Discovery_Protocol){ rel=nofollow } Splitting a subnet across multiple links requires proxying the NDP messages across the disjoint links, which is doable but more trouble than it's worth.
+When subnetting IPv6, one usually does not make subnets smaller than /64. Within a /64, the router and the devices can discover each other using [NDP.](https://en.wikipedia.org/wiki/Neighbor_Discovery_Protocol) Splitting a subnet across multiple links requires proxying the NDP messages across the disjoint links, which is doable but more trouble than it's worth.
 
 This means if the routed prefix is only a /64, then the router can only create one /64 subnet. If you wanted more subnets, you have to work with upstream to have them delegate your a prefix that's larger, say a /60 or /56 or /48. For example, if your router gets a /60, then it has the ability to make more than one /64 subnet, 2^(64 - 60) = 16 subnets to be precise.
 
@@ -79,15 +79,15 @@ This means if the routed prefix is only a /64, then the router can only create o
 
 
 <section>
-<h2 id="level-1-ipv6-for-the-router">[Level 1: IPv6 for the router](#level-1-ipv6-for-the-router)</h2>
+## Level 1: IPv6 for the router
 
-My ISP does not yet support IPv6, so I set up a tunnel with [Hurricane Electric.](https://tunnelbroker.net/){ rel=nofollow } Setting it up with pfSense was just a straightforward matter of following [Netgate's documentation](https://docs.netgate.com/pfsense/en/latest/interfaces/using-ipv6-with-a-tunnel-broker.html){ rel=nofollow } - I added a GIF interface which then functions as a second WAN interface for the other services on the router. At this point I was using just a /64 that HE hands out by default.
+My ISP does not yet support IPv6, so I set up a tunnel with [Hurricane Electric.](https://tunnelbroker.net/) Setting it up with pfSense was just a straightforward matter of following [Netgate's documentation](https://docs.netgate.com/pfsense/en/latest/interfaces/using-ipv6-with-a-tunnel-broker.html) - I added a GIF interface which then functions as a second WAN interface for the other services on the router. At this point I was using just a /64 that HE hands out by default.
 
 </section>
 
 
 <section>
-<h2 id="level-2-ipv6-for-all-the-physical-machines-behind-the-router">[Level 2: IPv6 for all the physical machines behind the router](#level-2-ipv6-for-all-the-physical-machines-behind-the-router)</h2>
+## Level 2: IPv6 for all the physical machines behind the router
 
 Just like the Netgate documentation, I enabled the DHCPv6 server on the `bridge0` interface. I did not want to add static mappings for the two devices, but I also wanted them to have fixed addresses instead of periodically rotating their addresses so that I could add DNS records for them. So I set the router's RA daemon to run in "Stateless DHCP" mode. This meant the devices would use SLAAC, which as I said above meant they would get deterministic addresses.
 
@@ -105,7 +105,7 @@ DHCP=yes
 
 
 <section>
-<h2 id="level-3-ipv6-for-all-the-docker-containers">[Level 3: IPv6 for all the Docker containers](#level-3-ipv6-for-all-the-docker-containers)</h2>
+## Level 3: IPv6 for all the Docker containers
 
 Here, all hell broke loose.
 
@@ -127,7 +127,7 @@ The other way is to use prefix delegation and delegate a whole /64 to the Docker
 
 So how does one get the host to request a prefix delegation from the router? Recall that the first step is to request a larger prefix than /64 from the ISP. In my case, HE does let you opt in to get a /48, so I did that and updated the LAN bridge IP to be under the new /48 prefix. I then configured the DHCPv6 server to reserve one `2001:db8:0:f002::/64` subnet under the /48 for prefix delegation.
 
-As for the desktop, the documentation for systemd-networkd does have [an example of prefix delegation:](https://www.freedesktop.org/software/systemd/man/systemd.network.html#id-1.34.4){ rel=nofollow }
+As for the desktop, the documentation for systemd-networkd does have [an example of prefix delegation:](https://www.freedesktop.org/software/systemd/man/systemd.network.html#id-1.34.4)
 
 ```
 # /etc/systemd/network/55-ipv6-pd-upstream.network
@@ -218,7 +218,7 @@ DHCP=ipv6
 
 Of course, I also switched `dhclient` to run on `enp6s0` instead of `enp4s0`. One thing that tripped me up here was that `dhclient -P -v enp6s0` still kept renewing the lease for `enp4s0`. I eventually discovered this is because `dhclient` renews all the leases it sees in its leases file regardless of which interfaces it was give in its command line. So I also had to manually clear the `enp4s0` leases from the `/var/lib/dhcp6/dhclient.leases` file.
 
-Now that I had a functioning prefix delegation and also a valid route, I tested the Docker containers again. But still the exact same thing happened - the client failed its `connect()` syscall with `EACCES`. I now turned to [`man connect`,](https://linux.die.net/man/2/connect){ rel=nofollow } which says:
+Now that I had a functioning prefix delegation and also a valid route, I tested the Docker containers again. But still the exact same thing happened - the client failed its `connect()` syscall with `EACCES`. I now turned to [`man connect`,](https://linux.die.net/man/2/connect) which says:
 
 >EACCES
 >
@@ -232,7 +232,7 @@ Now that I had a functioning prefix delegation and also a valid route, I tested 
 
 "The connection request failed because of a local firewall rule" is the only one that could apply.
 
-As an aside, openSUSE has both `iptables` and `nftables` available, and also defaults to using `firewalld` for the firewall. However, unlike the upstream `firewalld` code, the package in openSUSE defaults to using its `iptables` backend instead of its `nftables` backend. This is because Docker itself uses `iptables`, and works by putting its rules ahead of all existing rules. So if `firewalld` defined its rules using `nftables`, they would run in addition to Docker's rules and override them. That said, openSUSE also has the `iptables-backend-nft` package which causes all invocations of `iptables` to define rules using `nftables` anyway. Thus both `firewalld` and Docker end up defining rules that are visible using the `nft` CLI. This is the configuration I run, since I find the `nft` CLI easier to use than `iptables` and `ip6tables`. For example, flushing all rules with `nft` is just `nft flush ruleset`, but needs [fourteen commands for `iptables`](https://serverfault.com/a/200658){ rel=nofollow }
+As an aside, openSUSE has both `iptables` and `nftables` available, and also defaults to using `firewalld` for the firewall. However, unlike the upstream `firewalld` code, the package in openSUSE defaults to using its `iptables` backend instead of its `nftables` backend. This is because Docker itself uses `iptables`, and works by putting its rules ahead of all existing rules. So if `firewalld` defined its rules using `nftables`, they would run in addition to Docker's rules and override them. That said, openSUSE also has the `iptables-backend-nft` package which causes all invocations of `iptables` to define rules using `nftables` anyway. Thus both `firewalld` and Docker end up defining rules that are visible using the `nft` CLI. This is the configuration I run, since I find the `nft` CLI easier to use than `iptables` and `ip6tables`. For example, flushing all rules with `nft` is just `nft flush ruleset`, but needs [fourteen commands for `iptables`](https://serverfault.com/a/200658)
 
 So back to the problem, I decided to flush all the host's routing tables with `nft flush ruleset` and see what would happen. With an empty routing table, the kernel should not block any packets from being routed to wherever they need to be. Running the test again, it succeeded! The netcat client container was able to connect to the server container and they were able to send TCP messages back and forth. I also tried to connect to the server container from the laptop that was on a different subnet and that also worked, demonstrating that the routing was set up correctly even for hosts in different subnets to talk to each other.
 
@@ -323,13 +323,13 @@ One last problem was that containers could not connect to the router's DNS serve
 
 
 <section>
-<h2 id="level-4-turn-off-ipv4">[Level 4: Turn off IPv4, aka "How to run tayga on pfSense"](#level-4-turn-off-ipv4)</h2>
+## Level 4: Turn off IPv4, aka "How to run tayga on pfSense"
 
 This last one is the most idealistic. The idea was to disable IPv4 DHCP on the LAN entirely so that all devices would only get IPv6 addresses. By default, you would think this would mean the devices wouldn't be able to access IPv4-only servers on the internet, but two technologies help with this. Since IPv4 addresses are 32 bits, they easily fit in the lower 32 bits of any IPv6 address. Thus one can take a /96 that isn't being used by an actual address and use it to map IPv4 addresses to IPv6 addresses. The standard prefix reserved for this is `64:ff9b::/96` (though you can also use any /96 that belongs to you and isn't already used by any other subnet).
 
 So you need a DNS server that maps IPv4 addresses to IPv6 addresses under `64:ff9b::/96` and returns synthesized AAAA records with those addresses, which is called DNS64. Then you need a stateful NAT that translates IP packets from IPv6 packets with `64:ff9b::/96` to the underlying IPv4 address, which is called NAT64. Ideally both of these would run on the router so that none of the other devices would need an IPv4 address themselves to perform this translation.
 
-Enabling DNS64 on pfSense is straightforward - [this document](https://github.com/NLnetLabs/unbound/blob/master/doc/README.DNS64){ rel=nofollow } lists the config options to set. For pfSense, these options go in the "Custom options" textarea on the DNS resolver settings page.
+Enabling DNS64 on pfSense is straightforward - [this document](https://github.com/NLnetLabs/unbound/blob/master/doc/README.DNS64) lists the config options to set. For pfSense, these options go in the "Custom options" textarea on the DNS resolver settings page.
 
 ```
 server:module-config: "dns64 validator iterator"
@@ -340,7 +340,7 @@ After restarting the unbound service, DNS queries started returning these mapped
 
 Enabling NAT64 was less straightforward. Ideally it would be done by the firewall since doing stateful NAT is already the firewall's job. Unfortunately pfSense uses pf, and FreeBSD's pf does not support NAT64. FreeBSD's pf is forked from OpenBSD's pf, and OpenBSD's pf *does* have NAT64 support, but the patches apparently cannot be backported to FreeBSD because the two codebases have diverged a lot since the fork. FreeBSD's ipfw firewall does support it, but pfSense does not use it.
 
-The other way to do NAT64 is to use a user-space daemon. A popular software package for this is [tayga.](http://www.litech.org/tayga/){ rel=nofollow } There are a few tutorials on the internet for setting up tayga in a Linux VM and configuring pfSense to route the prefixed traffic to the VM which then converts it and route it back. But I wanted it to run on the router because I did not want any other LAN device to have an IPv4 address. As it happens, tayga is in the FreeBSD repository too, so it can be installed after enabling the FreeBSD repo.
+The other way to do NAT64 is to use a user-space daemon. A popular software package for this is [tayga.](http://www.litech.org/tayga/) There are a few tutorials on the internet for setting up tayga in a Linux VM and configuring pfSense to route the prefixed traffic to the VM which then converts it and route it back. But I wanted it to run on the router because I did not want any other LAN device to have an IPv4 address. As it happens, tayga is in the FreeBSD repository too, so it can be installed after enabling the FreeBSD repo.
 
 ```sh
 # Enable the FreeBSD repo. pkg reads the files in alphabetical order,
@@ -356,7 +356,7 @@ pkg -vv
 pkg install tayga
 ```
 
-Setting tayga up needed some more work. OPNSense recently added some support for running tayga as a plugin, so I was able to copy some of the work they did. [This GitHub comment](https://github.com/opnsense/core/issues/167#issuecomment-587166184){ rel=nofollow } and [this GitHub comment](https://github.com/opnsense/plugins/pull/1700#issuecomment-589350662){ rel=nofollow } were very useful, as was the actual implementation of the plugin [here.](https://github.com/opnsense/plugins/tree/master/net/tayga/){ rel=nofollow }
+Setting tayga up needed some more work. OPNSense recently added some support for running tayga as a plugin, so I was able to copy some of the work they did. [This GitHub comment](https://github.com/opnsense/core/issues/167#issuecomment-587166184) and [this GitHub comment](https://github.com/opnsense/plugins/pull/1700#issuecomment-589350662) were very useful, as was the actual implementation of the plugin [here.](https://github.com/opnsense/plugins/tree/master/net/tayga/)
 
 I configured tayga by editing `/usr/local/etc/tayga.conf`:
 
@@ -489,11 +489,11 @@ Alas...
 
 
 <section>
-<h2 id="epilogue">[Epilogue](#epilogue)</h2>
+## Epilogue
 
 ... it turned out a few things I use regularly don't work in a pure IPv6 + NAT64 environment.
 
-One of them is [Steam.](https://github.com/ValveSoftware/steam-for-linux/issues/3372){ rel=nofollow } The precise reason is unknown.
+One of them is [Steam.](https://github.com/ValveSoftware/steam-for-linux/issues/3372) The precise reason is unknown.
 
 The other is bittorrent. The bittorrent tracker messages include IP addresses inside them, so a firewall cannot rewrite any IPv4 addresses inside the messages with the prefix (unless it used deep packet inspection or was application protocol-aware). Therefore the bittorrent client ends up with IPv4 IPs that it cannot use and becomes unable to find any peers to connect to. It could be possible to have a bittorrent client that lets the user configure it with the prefix, so that it can itself convert IPv4 addresses to IPv6 addresses. But the client I use does not have such a capability and I did not find any other that might.
 

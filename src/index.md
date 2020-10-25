@@ -4,7 +4,7 @@ title: 'Home'
 
 <nav>
 
-- [GitHub](https://github.com/Arnavion){ rel="me nofollow" }
+- [GitHub](https://github.com/Arnavion)
 - [Blog](/blog/)
 
 </nav>

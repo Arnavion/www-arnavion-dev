@@ -46,7 +46,9 @@ pandoc \
 	--fail-if-warnings \
 	--output out/index.html --to html5 --template templates/index.html \
 	--variable "css:$css" \
-	--from markdown-smart src/index.md
+	--filter pandoc-filter \
+	--from markdown-smart \
+	src/index.md
 
 
 # /blog/*/index.html
@@ -85,7 +87,9 @@ for next in src/blog/* ''; do
 			--variable "blog_current_dirname:$current_out" \
 			--variable "blog_next_filename:$next_out" \
 			--variable "blog_next_title:$next_title" \
-			--from markdown-smart+link_attributes "$current"
+			--filter pandoc-filter \
+			--from markdown-smart \
+			"$current"
 	fi
 
 	previous="$current"
@@ -151,8 +155,6 @@ $blog_rss_content
 </rss>
 "
 printf '%s' "$blog_rss_content" > out/blog/index.xml
-
-grep -R '<a href="http' out/ | grep -v 'nofollow' | sed -e 's/^/Missing nofollow: /' && exit 1 || :
 
 echo 'OK'
 

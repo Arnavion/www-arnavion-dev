@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# For external links, appends rel=nofollow
+# For headings, converts their inner text to a link to the same header
+
+# Data model reference (for the node.js library because it's easier to read):
+# https://github.com/mvhenderson/pandoc-filter-node/blob/master/index.ts
+
+jq '
+	walk(
+		(try .t catch "") as $t |
+		if $t == "Link" and (.c[2][0] | startswith("http")) then
+			{
+				"t": "Link",
+				"c": [
+					["", [], [["rel", "nofollow"]]],
+					.c[1],
+					.c[2]
+				]
+			}
+		elif $t == "Header" then
+			{
+				"t": "Header",
+				"c": [
+					.c[0],
+					.c[1],
+					[
+						{
+							"t": "Link",
+							"c": [
+								["", [], []],
+								.c[2],
+								["#\(.c[1][0])", ""]
+							]
+						}
+					]
+				]
+			}
+		else
+			.
+		end
+	)
+'
