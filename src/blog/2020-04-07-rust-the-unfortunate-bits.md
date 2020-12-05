@@ -44,7 +44,7 @@ All of these things *could* be resolved in a Rust "2.0", ie a release that is al
             Some(id) => format!("#{}", id).into(), // Creates a Cow::Owned(String)
             None => "*".into(),                    // Creates a Cow::Borrowed(&'static str)
         };
-        execute(&query);
+        execute(&query);                           // &Cow<str> implicitly derefs to &str
     ```
 
     But what exactly does "clone-on-write" mean anyway, given it was important enough to name the type after? The answer lies in one of the two methods that `Cow` impls:
@@ -55,7 +55,7 @@ All of these things *could* be resolved in a Rust "2.0", ie a release that is al
 
     For example, if used on a `Cow::Borrowed(&str)`, this method will clone the `&str` into a `String`, change `self` to be a `Cow::Owned(String)` instead, and then return a `&mut String`. If it was already a `Cow::Owned(String)`, it just returns a `&mut String` from the same string. So it is indeed a "clone-on-write" operation.
 
-    However, of all the times I've used `Cow`, I've used this method very rarely. Most of my uses have been to just store either a borrow or an owned value, as mentioned above. Occasionally I've used the other method that `Cow` impls, `fn into_owned(self) -> B::Owned`, but this is just "clone", not "clone-on-write", since it consumes the `Cow`.
+    However, of all the times I've used `Cow`, I've used this method very rarely. Most of my uses have been to just store either a borrow or an owned value, as mentioned above. Occasionally I've used the other method that `Cow` impls, `fn into_owned(self) -> B::Owned`, but this is just "convert", not "clone-on-write", since it consumes the `Cow`.
 
     In fact, `Cow` does impl the standard [`Clone`](https://doc.rust-lang.org/stable/std/clone/trait.Clone.html) and [`ToOwned`](https://doc.rust-lang.org/stable/std/borrow/trait.ToOwned.html) traits (the latter via its blanket impl for all `T: Clone`). But `clone`ing or `to_owned`ing a `&Cow::<'a, B>::Borrowed(B)` gives another `Cow::<'a, B>::Borrowed(B)`, not a `Cow::<'static, B>::Owned(B::Owned)`. (It couldn't do that anyway, because `Clone::clone` must return `Self`, so the lifetimes need to match.) So `Cow` has two methods of cloning itself that are unlike the other two methods of cloning it has, and specifically the method named `to_owned` doesn't necessarily produce an `Owned` value.
 
