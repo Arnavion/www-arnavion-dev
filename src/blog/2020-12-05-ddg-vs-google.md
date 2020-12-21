@@ -450,3 +450,83 @@ Analysis: First two results are relevant. The rest are for songs with similar na
 (Reminder: I have "safe search" off for both engines.)
 
 </section>
+
+
+<section>
+## `legal term proof of evidence possession`
+
+Goal: Find the legal term for the proof that must be provided for a piece of evidence that possessed after a crime, in order for the evidence to be to be admissible in court.
+
+Correct answer: "Chain of custody"
+
+### DDG
+
+1.  >Proof legal definition of Proof
+    >
+    >https://legal-dictionary.thefreedictionary.com/proof
+    >
+    >It is distinguishable from evidence in that proof is a broad term comprehending everything that may be adduced at a trial, whereas evidence is a narrow term describing certain types of proof that can be admitted at trial. The phrase burden of proof includes two distinct concepts, the Burden of Persuasion and the Burden of Going Forward.
+
+1.  >Criminal Discovery: The Right to Evidence Disclosure ...
+    >
+    >https://www.lawyers.com/legal-info/criminal/criminal-law-basics/criminal-law-right-to-evidence-disclosure.html
+    >
+    >Exculpatory Evidence The Constitution does, however, require that the prosecution disclose to the defense exculpatory evidence within its possession or control. "Exculpatory" generally means evidence that tends to contradict the defendant's supposed guilt or that supports lesser punishment.
+
+1.  >Possession (law) - Wikipedia
+    >
+    >https://en.wikipedia.org/wiki/Possession_(law)
+    >
+    >In civil law countries, possession is not a right but a (legal) fact which enjoys certain protection by the law. It can provide evidence of ownership but it does not in itself satisfy the burden of proof. For example, ownership of a house is never proven by mere possession of a house.
+
+1.  >Evidence - Browse Legal Terms - Legal Dictionary
+    >
+    >https://legaldictionary.net/evidence/
+    >
+    >In the legal system, evidence is any type of proof presented at trial, for the purpose of convincing the judge and/or jury that alleged facts of the case are true. This may include anything from witness testimony to documents, and objects, to photographs.
+
+1.  >EVIDENCE - Admissibility - Prejudicial evidence - Methods ...
+    >
+    >https://www.thelawyersdaily.ca/articles/23234/evidence-admissibility-prejudicial-evidence-methods-of-proof
+    >
+    >The anecdotal testimony of a police officer regarding the likelihood of possession of the steroids for personal use exceeded the proper bounds of opinion evidence and culminated in a subtle reversal of the burden of proof on the steroids charge.
+
+Analysis: All results are irrelevant.
+
+### Google
+
+1.  >The Legal Concept of Evidence (Stanford Encyclopedia of ...
+    >
+    >https://plato.stanford.edu/entries/evidence-legal/
+    >
+    >It may seem obvious that there must be a legal concept of evidence that is ... approach to evidence and proof that are distinctive to law (Rescher and ... that judges are already in possession of the (commonsense) resources to ...
+
+1.  >Burden of proof (law) - Wikipedia
+    >
+    >https://en.wikipedia.org/wiki/Burden_of_proof_(law)
+    >
+    >Burden of proof is a legal duty that encompasses two connected but separate ideas that apply ... Thus the concept of burden of proof works differently in different countries: ie ... The "some credible evidence" standard is used as a legal placeholder to ... Possession of the keys is usually sufficient to prove control, even if the ...
+
+1.  >Proof, Burden of Proof, and Presumptions. - Legal Information ...
+    >
+    >https://www.law.cornell.edu/constitution-conan/amendment-14/section-1/proof-burden-of-proof-and-presumptions
+    >
+    >In Clark, the Court weighed competing interests to hold that such evidence ... In that case, the Court struck down a presumption that a person possessing an ... as a whole, jury instructions that define “reasonable doubt” as requiring a “moral ...
+
+1.  >"Chain of Custody" for Evidence | Nolo
+    >
+    >https://www.nolo.com/legal-encyclopedia/what-chain-custody.html
+    >
+    >Proving that an exhibit being offered into evidence is exactly what it purports to be—the actual drugs found on the defendant or the very calculator stolen from the store—requires proof of who had possession of the exhibit at all times between the time officers seized it and the trial.
+
+1.  >Legal Definitions – Federal Bar Association
+    >
+    >https://www.fedbar.org/in-the-media/legal-definitions/
+    >
+    >Adverse possession – Acquiring title to land by possessing the land for a certain ... The term also refers to the allocation of percentages of negligence between ... Preponderance of the Evidence – The burden of proof in a civil case whereby a ...
+
+Analysis: The fourth result has the answer.
+
+**Winner: Google**
+
+</section>
