@@ -120,7 +120,7 @@ All of these things *could* be resolved in a Rust "2.0", ie a release that is al
         // This is accessing the element that was just inserted, so there's no way this could fail.
         //
         // But still, to satisfy the typesystem, one must write .unwrap().
-        // The compiler is also not smart enough to detect that `last()` can ever return `None`,
+        // The compiler is also not smart enough to detect that `last()` can never return `None`,
         // so it will still emit the panic machinery for this unreachable case.
         let new_element = v.last().unwrap();
 
