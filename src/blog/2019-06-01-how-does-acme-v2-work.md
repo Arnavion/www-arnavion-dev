@@ -14,7 +14,7 @@ I'll write more details about the Azure setup later. For now, I want to share wh
 The ACME v2 protocol is defined in an RFC, and also uses concepts from other RFCS:
 
 - [RFC 4648 - The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
-- [RFC 7517 - JSON Web Signature](https://tools.ietf.org/html/rfc7515)
+- [RFC 7515 - JSON Web Signature](https://tools.ietf.org/html/rfc7515)
 - [RFC 7517 - JSON Web Key](https://tools.ietf.org/html/rfc7517)
 - [RFC 7518 - JSON Web Algorithms (JWA)](https://tools.ietf.org/html/rfc7518)
 - [RFC 7638 - JSON Web Key (JWK) Thumbprint](https://tools.ietf.org/html/rfc7638)
