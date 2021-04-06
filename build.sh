@@ -160,14 +160,14 @@ echo 'OK'
 
 
 if [ "${1:-}" = 'publish' ]; then
-	AZURE_RESOURCE_GROUP_NAME='arnavion-dev'
-	AZURE_STORAGE_ACCOUNT_NAME='wwwarnaviondev'
-	AZURE_CDN_PROFILE_NAME='arnavion-dev'
-	AZURE_CDN_ENDPOINT_NAME='www-arnavion-dev'
+	AZURE_WWW_RESOURCE_GROUP_NAME='arnavion-dev-www'
+	AZURE_WWW_STORAGE_ACCOUNT_NAME='wwwarnaviondev'
+	AZURE_WWW_CDN_PROFILE_NAME='cdn-profile'
+	AZURE_WWW_CDN_ENDPOINT_NAME='www-arnavion-dev'
 
-	AZURE_STORAGE_ACCOUNT_CONNECTION_STRING="$(
+	AZURE_WWW_STORAGE_ACCOUNT_CONNECTION_STRING="$(
 		az storage account show-connection-string \
-			--resource-group "$AZURE_RESOURCE_GROUP_NAME" --name "$AZURE_STORAGE_ACCOUNT_NAME" \
+			--resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" --name "$AZURE_WWW_STORAGE_ACCOUNT_NAME" \
 			--query connectionString --output tsv
 	)"
 
@@ -214,22 +214,22 @@ if [ "${1:-}" = 'publish' ]; then
 
 	for prefix in '.well-known/' 'index.html' 'blog/'; do
 		az storage blob delete-batch \
-			--connection-string "$AZURE_STORAGE_ACCOUNT_CONNECTION_STRING" \
+			--connection-string "$AZURE_WWW_STORAGE_ACCOUNT_CONNECTION_STRING" \
 			--source '$web' \
 			--pattern "$prefix*" \
 			--verbose
 	done
 
 	az storage blob upload-batch \
-		--connection-string "$AZURE_STORAGE_ACCOUNT_CONNECTION_STRING" \
+		--connection-string "$AZURE_WWW_STORAGE_ACCOUNT_CONNECTION_STRING" \
 		--source "$PWD/out" --destination '$web' --type block \
 		--verbose
 
 	az cdn endpoint update \
-		--resource-group "$AZURE_RESOURCE_GROUP_NAME" --profile-name "$AZURE_CDN_PROFILE_NAME" --name "$AZURE_CDN_ENDPOINT_NAME" \
+		--resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" --profile-name "$AZURE_WWW_CDN_PROFILE_NAME" --name "$AZURE_WWW_CDN_ENDPOINT_NAME" \
 		--set "deliveryPolicy.rules=$cdn_endpoint_delivery_policy_rules"
 
 	az cdn endpoint purge \
-		--resource-group "$AZURE_RESOURCE_GROUP_NAME" --profile-name "$AZURE_CDN_PROFILE_NAME" --name "$AZURE_CDN_ENDPOINT_NAME" \
+		--resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" --profile-name "$AZURE_WWW_CDN_PROFILE_NAME" --name "$AZURE_WWW_CDN_ENDPOINT_NAME" \
 		--content-paths '/*'
 fi
