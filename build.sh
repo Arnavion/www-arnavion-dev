@@ -183,6 +183,7 @@ if [ "${1:-}" = 'publish' ]; then
 			"actions": [{
 				"name": "ModifyResponseHeader",
 				"parameters": {
+					"@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters",
 					"headerAction": "Append",
 					"headerName": "access-control-allow-origin",
 					"value": "*"
@@ -190,6 +191,7 @@ if [ "${1:-}" = 'publish' ]; then
 			}, {
 				"name": "ModifyResponseHeader",
 				"parameters": {
+					"@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters",
 					"headerAction": "Append",
 					"headerName": "content-security-policy",
 					"value": $CSP
@@ -200,13 +202,39 @@ if [ "${1:-}" = 'publish' ]; then
 			"name": "EnforceHTTPS",
 			"conditions": [{
 				"name": "RequestScheme",
-				"parameters": { "matchValues": ["HTTP"] }
+				"parameters": {
+					"@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleRequestSchemeConditionParameters",
+					"operator": "Equal",
+					"matchValues": ["HTTP"]
+				}
 			}],
 			"actions": [{
 				"name": "UrlRedirect",
 				"parameters": {
+					"@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlRedirectActionParameters",
+					"operator": "Equal",
 					"destinationProtocol": "Https",
 					"redirectType": "PermanentRedirect"
+				}
+			}]
+		}, {
+			"order": 2,
+			"name": "ContentTypeWellKnownMatrixClient",
+			"conditions": [{
+				"name": "UrlPath",
+				"parameters": {
+					"@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlPathMatchConditionParameters",
+					"operator": "Equal",
+					"matchValues": ["/.well-known/matrix/client"]
+				}
+			}],
+			"actions": [{
+				"name": "ModifyResponseHeader",
+				"parameters": {
+					"@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters",
+					"headerAction": "Overwrite",
+					"headerName": "content-type",
+					"value": "application/json"
 				}
 			}]
 		}]'
