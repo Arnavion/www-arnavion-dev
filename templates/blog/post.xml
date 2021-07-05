@@ -1,7 +1,6 @@
-<item>
+<entry>
+	<id>https://www.arnavion.dev/blog/$blog_current_dirname$/</id>
 	<title>$title$</title>
-	<link>https://www.arnavion.dev/blog/$blog_current_dirname$/</link>
-	<pubDate>$blog_current_pubdate$</pubDate>
-	<guid>https://www.arnavion.dev/blog/$blog_current_dirname$/</guid>
-	<description></description>
-</item>
+	<updated>$blog_current_pubdate$</updated>
+	<link rel="alternate" href="https://www.arnavion.dev/blog/$blog_current_dirname$/" />
+</entry>

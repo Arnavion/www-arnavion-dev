@@ -27,7 +27,7 @@ blog_pubdate() {
 		--output - --to html5 --template pubdate.html \
 		--from markdown-smart "$1"
 	)"
-	date -Rud "$date"
+	date --date "$date" --iso-8601=seconds --utc
 }
 
 rm -rf out
@@ -121,7 +121,7 @@ pandoc \
 
 # /blog/index.xml
 
-blog_rss_content=''
+blog_feed_entries=''
 
 for current in src/blog/*; do
 	if [ "$current" == 'src/blog/index.md' ]; then
@@ -131,30 +131,26 @@ for current in src/blog/*; do
 	current_out="$(blog_out_dirname "$current")"
 	current_title="$(blog_title "$current")"
 
-	blog_rss_content="$(
+	blog_feed_entries="$(
 		pandoc \
 			--fail-if-warnings \
 			--output - --template templates/blog/post.xml \
 			--variable "blog_current_dirname:$current_out" \
 			--variable "blog_current_pubdate:$(blog_pubdate "$current")" \
 			--from markdown-smart "$current"
-	)$blog_rss_content"
+	)$blog_feed_entries"
 done
 
-blog_rss_content="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>
-<rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">
-	<channel>
-		<title>Blog - www.arnavion.dev</title>
-		<link>https://www.arnavion.dev/blog/</link>
-		<description>Blog - www.arnavion.dev</description>
-		<language>en-us</language>
-		<lastBuildDate>$(date -Ru)$</lastBuildDate>
-		<atom:link href=\"https://www.arnavion.dev/blog/index.xml\" rel=\"self\" type=\"application/rss+xml\" />
-$blog_rss_content
-	</channel>
-</rss>
-"
-printf '%s' "$blog_rss_content" > out/blog/index.xml
+printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>
+<feed xmlns=\"http://www.w3.org/2005/Atom\">
+	<id>https://www.arnavion.dev/blog/</id>
+	<title>Blog - www.arnavion.dev</title>
+	<updated>$(date --iso-8601=seconds --utc)</updated>
+	<link href=\"https://www.arnavion.dev/blog/\" />
+	<link href=\"https://www.arnavion.dev/blog/index.xml\" rel=\"self\" />
+%s
+</feed>
+" "$blog_feed_entries" > out/blog/index.xml
 
 echo 'OK'
 
@@ -235,6 +231,26 @@ if [ "${1:-}" = 'publish' ]; then
 					"headerAction": "Overwrite",
 					"headerName": "content-type",
 					"value": "application/json"
+				}
+			}]
+		}, {
+			"order": 3,
+			"name": "ContentTypeBlogFeed",
+			"conditions": [{
+				"name": "UrlPath",
+				"parameters": {
+					"@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlPathMatchConditionParameters",
+					"operator": "Equal",
+					"matchValues": ["/blog/index.xml"]
+				}
+			}],
+			"actions": [{
+				"name": "ModifyResponseHeader",
+				"parameters": {
+					"@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters",
+					"headerAction": "Overwrite",
+					"headerName": "content-type",
+					"value": "application/atom+xml"
 				}
 			}]
 		}]'
