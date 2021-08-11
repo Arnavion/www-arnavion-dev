@@ -159,3 +159,38 @@ az cdn custom-domain enable-https \
     --user-cert-protocol-type 'sni' \
     --min-tls-version '1.2'
 ```
+
+
+# Log Analytics
+
+## Request URIs aggregated by client
+
+```
+AzureDiagnostics
+| where Category == "AzureCdnAccessLog" and endpoint_s == "www-arnavion-dev.azureedge.net"
+| extend client = strcat("[", clientIp_s, "] ", userAgent_s)
+| summarize count_client_requestUri = count() by client, requestUri_s
+| order by client asc, count_client_requestUri desc
+| summarize
+    count_client = sum(count_client_requestUri),
+    make_list(pack(requestUri_s, count_client_requestUri))
+    by client
+| order by count_client desc, client asc
+| project count_client, client, list_
+```
+
+## Request clients aggregated by URI
+
+```
+AzureDiagnostics
+| where Category == "AzureCdnAccessLog" and endpoint_s == "www-arnavion-dev.azureedge.net"
+| extend client = strcat("[", clientIp_s, "] ", userAgent_s)
+| summarize count_client_requestUri = count() by client, requestUri_s
+| order by requestUri_s asc, count_client_requestUri desc
+| summarize
+    count_requestUri = sum(count_client_requestUri),
+    make_list(pack(client, count_client_requestUri))
+    by requestUri_s
+| order by count_requestUri desc, requestUri_s asc
+| project count_requestUri, requestUri_s, list_
+```
