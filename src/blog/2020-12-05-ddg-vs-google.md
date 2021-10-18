@@ -373,7 +373,7 @@ Analysis: While all results are relevant to Zig (release notes for two arbitrary
     >
     >Zig has the concept of a debug build vs a release build. Here is a ... Release Safe; Release Small.
 
-Analysis: First result is the correct one, though its excerpts are not the best - the first excerpt is for the table of contents and does identify the flag, and the other two exceerpts are irrelevant. The second result also has a better first excerpt; in fact this text is also present in the first link so it should've been used for the first result too.
+Analysis: First result is the correct one, though its excerpts are not the best - the first excerpt is for the table of contents and does identify the flag, and the other two excerpts are irrelevant. The second result also has a better first excerpt; in fact this text is also present in the first link so it should've been used for the first result too.
 
 **Winner: Google**
 
@@ -455,7 +455,7 @@ Analysis: First two results are relevant. The rest are for songs with similar na
 <section>
 ## `legal term proof of evidence possession`
 
-Goal: Find the legal term for the proof that must be provided for a piece of evidence that possessed after a crime, in order for the evidence to be to be admissible in court.
+Goal: Find the legal term for the proof that must be provided for a piece of evidence that was possessed after a crime, in order for the evidence to be admissible in court.
 
 Correct answer: "Chain of custody"
 
