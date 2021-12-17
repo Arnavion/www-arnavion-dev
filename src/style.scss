@@ -124,6 +124,22 @@ code.sourceCode.diff span.va {
 	color: green;
 }
 
+table {
+	border: var(--border-color) solid 2px;
+	border-collapse: collapse;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+td, th {
+	border: var(--border-color) solid 1px;
+	padding: 0.3em;
+}
+
+th {
+	text-align: center;
+}
+
 /*
 Firefox's reader mode stupidly picks the first element that contains the string "author" in its text content,
 and moves it from its right place in the page to the top as a byline.
