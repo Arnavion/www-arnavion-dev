@@ -53,6 +53,8 @@ pandoc \
 
 # /blog/*/index.html
 
+pgp_pubkey="$(gpg --export --armor 4FD3B6598098B909B9B577A068CBF71768A68A0A)"
+
 previous=''
 current=''
 for next in src/blog/* ''; do
@@ -87,6 +89,7 @@ for next in src/blog/* ''; do
 			--variable "blog_current_dirname:$current_out" \
 			--variable "blog_next_filename:$next_out" \
 			--variable "blog_next_title:$next_title" \
+			--variable "pgp_pubkey:$pgp_pubkey" \
 			--filter pandoc-filter \
 			--from markdown-smart \
 			"$current"
