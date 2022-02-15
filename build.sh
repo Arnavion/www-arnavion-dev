@@ -9,17 +9,17 @@ blog_out_dirname() {
 	printf '%s' "$out"
 }
 
-blog_title() {
-	trap 'rm -f title.html' RETURN
+blog_title() (
+	trap 'rm -f title.html' EXIT
 	printf '$title$' > title.html
 	pandoc \
 		--fail-if-warnings \
 		--output - --to html5 --template title.html \
 		--from markdown-smart "$1"
-}
+)
 
-blog_pubdate() {
-	trap 'rm -f pubdate.html' RETURN
+blog_pubdate() (
+	trap 'echo 5; rm -f pubdate.html' EXIT
 	printf '$date$' > pubdate.html
 	date="$(
 		pandoc \
@@ -28,7 +28,7 @@ blog_pubdate() {
 		--from markdown-smart "$1"
 	)"
 	date --date "$date" --iso-8601=seconds --utc
-}
+)
 
 rm -rf out
 mkdir -p out
