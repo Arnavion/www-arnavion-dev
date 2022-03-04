@@ -238,6 +238,26 @@ if [ "${1:-}" = 'publish' ]; then
 			}]
 		}, {
 			"order": 3,
+			"name": "ContentTypeWellKnownMatrixServer",
+			"conditions": [{
+				"name": "UrlPath",
+				"parameters": {
+					"@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlPathMatchConditionParameters",
+					"operator": "Equal",
+					"matchValues": ["/.well-known/matrix/server"]
+				}
+			}],
+			"actions": [{
+				"name": "ModifyResponseHeader",
+				"parameters": {
+					"@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters",
+					"headerAction": "Overwrite",
+					"headerName": "content-type",
+					"value": "application/json"
+				}
+			}]
+		}, {
+			"order": 4,
 			"name": "ContentTypeBlogFeed",
 			"conditions": [{
 				"name": "UrlPath",
