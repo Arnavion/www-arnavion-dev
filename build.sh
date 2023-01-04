@@ -19,13 +19,13 @@ blog_title() (
 )
 
 blog_pubdate() (
-	trap 'echo 5; rm -f pubdate.html' EXIT
+	trap 'rm -f pubdate.html' EXIT
 	printf '$date$' > pubdate.html
 	date="$(
 		pandoc \
-		--fail-if-warnings \
-		--output - --to html5 --template pubdate.html \
-		--from markdown-smart "$1"
+			--fail-if-warnings \
+			--output - --to html5 --template pubdate.html \
+			--from markdown-smart "$1"
 	)"
 	date --date "$date" --iso-8601=seconds --utc
 )
@@ -279,11 +279,11 @@ if [ "${1:-}" = 'publish' ]; then
 		}]'
 	)"
 
-	for prefix in '.well-known/' 'index.html' 'blog/'; do
+	for pattern in '.well-known/*' 'index.html' 'blog/*'; do
 		az storage blob delete-batch \
 			--connection-string "$AZURE_WWW_STORAGE_ACCOUNT_CONNECTION_STRING" \
 			--source '$web' \
-			--pattern "$prefix*" \
+			--pattern "$pattern" \
 			--verbose
 	done
 
