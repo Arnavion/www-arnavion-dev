@@ -33,7 +33,7 @@ python3 -m http.server 8080 -d out
 
 ```sh
 # Website
-DOMAIN_NAME='www.arnavion.dev'
+DOMAIN_NAME='arnavion.dev'
 AZURE_WWW_RESOURCE_GROUP_NAME='arnavion-dev-www'
 AZURE_WWW_CDN_PROFILE_NAME='cdn-profile'
 AZURE_WWW_CDN_ENDPOINT_NAME='www-arnavion-dev'
@@ -92,6 +92,11 @@ az cdn custom-domain create \
     --resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" \
     --profile-name "$AZURE_WWW_CDN_PROFILE_NAME" --endpoint-name "$AZURE_WWW_CDN_ENDPOINT_NAME" --name "${DOMAIN_NAME//./-}" \
     --hostname "$DOMAIN_NAME"
+
+az cdn custom-domain create \
+    --resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" \
+    --profile-name "$AZURE_WWW_CDN_PROFILE_NAME" --endpoint-name "$AZURE_WWW_CDN_ENDPOINT_NAME" --name "www-${DOMAIN_NAME//./-}" \
+    --hostname "www.$DOMAIN_NAME"
 
 
 # Create a resource group for the Log Analytics workspace.
@@ -152,6 +157,16 @@ az role assignment create \
 az cdn custom-domain enable-https \
     --resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" \
     --profile-name "$AZURE_WWW_CDN_PROFILE_NAME" --endpoint-name "$AZURE_WWW_CDN_ENDPOINT_NAME" --name "${DOMAIN_NAME//./-}" \
+    --user-cert-subscription-id "$AZURE_SUBSCRIPTION_ID" \
+    --user-cert-group-name "$AZURE_KEY_VAULT_RESOURCE_GROUP_NAME" \
+    --user-cert-vault-name "$AZURE_KEY_VAULT_NAME" \
+    --user-cert-secret-name "$AZURE_KEY_VAULT_CERTIFICATE_NAME" \
+    --user-cert-protocol-type 'sni' \
+    --min-tls-version '1.2'
+
+az cdn custom-domain enable-https \
+    --resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" \
+    --profile-name "$AZURE_WWW_CDN_PROFILE_NAME" --endpoint-name "$AZURE_WWW_CDN_ENDPOINT_NAME" --name "www-${DOMAIN_NAME//./-}" \
     --user-cert-subscription-id "$AZURE_SUBSCRIPTION_ID" \
     --user-cert-group-name "$AZURE_KEY_VAULT_RESOURCE_GROUP_NAME" \
     --user-cert-vault-name "$AZURE_KEY_VAULT_NAME" \
