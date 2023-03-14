@@ -196,24 +196,6 @@ if [ "${1:-}" = 'publish' ]; then
 			}]
 		}, {
 			"order": 1,
-			"name": "RedirectToHTTPS",
-			"conditions": [{
-				"name": "RequestScheme",
-				"parameters": {
-					"operator": "Equal",
-					"matchValues": ["HTTP"]
-				}
-			}],
-			"actions": [{
-				"name": "UrlRedirect",
-				"parameters": {
-					"customHostname": "www.arnavion.dev",
-					"destinationProtocol": "Https",
-					"redirectType": "PermanentRedirect"
-				}
-			}]
-		}, {
-			"order": 2,
 			"name": "RedirectToWWW",
 			"conditions": [{
 				"name": "RequestHeader",
@@ -233,7 +215,7 @@ if [ "${1:-}" = 'publish' ]; then
 				}
 			}]
 		}, {
-			"order": 3,
+			"order": 2,
 			"name": "ContentTypeWellKnownMatrix",
 			"conditions": [{
 				"name": "UrlPath",
@@ -254,7 +236,7 @@ if [ "${1:-}" = 'publish' ]; then
 				}
 			}]
 		}, {
-			"order": 4,
+			"order": 3,
 			"name": "ContentTypeBlogFeed",
 			"conditions": [{
 				"name": "UrlPath",
