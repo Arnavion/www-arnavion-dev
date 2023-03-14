@@ -86,7 +86,12 @@ az cdn endpoint create \
     --origin-host-header "$storage_account_web_endpoint" \
     --enable-compression \
     --no-http \
-    --query-string-caching-behavior 'IgnoreQueryString'
+    --query-string-caching-behavior 'IgnoreQueryString' \
+    --content-types-to-compress \
+        'application/atom+xml' \
+        'application/json' \
+        'text/html' \
+        'text/plain'
 
 az cdn custom-domain create \
     --resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" \
