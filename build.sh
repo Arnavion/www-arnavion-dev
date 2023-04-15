@@ -2,6 +2,25 @@
 
 set -euo pipefail
 
+openpgpkey_hash() {
+	key_id="$1"
+
+	gpg-wks-client --print-wkd-hash "$(
+		gpg --list-keys --with-colons "$key_id" |
+			awk -F: '/^uid:/ { print($10) }'
+	)" |
+		cut '-d ' -f1
+}
+
+well_known_openpgpkey() {
+	key_id="$1"
+
+	key_hash="$(openpgpkey_hash "$key_id")"
+
+	mkdir -p 'out/.well-known/openpgpkey/hu'
+	gpg --export "$key_id" >"out/.well-known/openpgpkey/hu/$key_hash"
+}
+
 blog_out_dirname() {
 	out="$1"
 	out="${out#src/blog/}"
@@ -37,6 +56,11 @@ mkdir -p out
 cp -R src/.well-known out/
 
 
+# /.well-known/openpgpkey/
+well_known_openpgpkey 'C234FF14FC3895C194A705AE89A451A9C0E3AF0B'
+well_known_openpgpkey '4FD3B6598098B909B9B577A068CBF71768A68A0A'
+
+
 # CSS
 css="$(sassc --style compressed src/style.scss)"
 
@@ -52,8 +76,8 @@ pandoc \
 
 
 # /blog/*/index.html
-
-pgp_pubkey="$(gpg --export --armor 4FD3B6598098B909B9B577A068CBF71768A68A0A)"
+pgp_key_id='4FD3B6598098B909B9B577A068CBF71768A68A0A'
+pgp_key_hash="$(openpgpkey_hash "$pgp_key_id")"
 
 previous=''
 current=''
@@ -89,7 +113,8 @@ for next in src/blog/* ''; do
 			--variable "blog_current_dirname:$current_out" \
 			--variable "blog_next_filename:$next_out" \
 			--variable "blog_next_title:$next_title" \
-			--variable "pgp_pubkey:$pgp_pubkey" \
+			--variable "pgp_key_id:$pgp_key_id" \
+			--variable "pgp_key_hash:$pgp_key_hash" \
 			--filter pandoc-filter \
 			--from markdown-smart \
 			"$current"
