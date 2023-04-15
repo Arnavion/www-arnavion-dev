@@ -230,6 +230,13 @@ if [ "${1:-}" = 'publish' ]; then
 					"matchValues": ["arnavion.dev"],
 					"transforms": ["Lowercase"]
 				}
+			}, {
+				"name": "UrlPath",
+				"parameters": {
+					"operator": "BeginsWith",
+					"negateCondition": true,
+					"matchValues": ["/.well-known/"]
+				}
 			}],
 			"actions": [{
 				"name": "UrlRedirect",
