@@ -188,6 +188,7 @@ if [ "${1:-}" = 'publish' ]; then
 	AZURE_WWW_STORAGE_ACCOUNT_NAME='wwwarnaviondev'
 	AZURE_WWW_CDN_PROFILE_NAME='cdn-profile'
 	AZURE_WWW_CDN_ENDPOINT_NAME='www-arnavion-dev'
+	AZURE_WWW_CDN_ENDPOINT_LOCATION='westus'
 
 	AZURE_WWW_STORAGE_ACCOUNT_CONNECTION_STRING="$(
 		az storage account show-connection-string \
@@ -207,6 +208,7 @@ if [ "${1:-}" = 'publish' ]; then
 			"actions": [{
 				"name": "ModifyResponseHeader",
 				"parameters": {
+					"typeName": "DeliveryRuleHeaderActionParameters",
 					"headerAction": "Append",
 					"headerName": "access-control-allow-origin",
 					"value": "*"
@@ -214,6 +216,7 @@ if [ "${1:-}" = 'publish' ]; then
 			}, {
 				"name": "ModifyResponseHeader",
 				"parameters": {
+					"typeName": "DeliveryRuleHeaderActionParameters",
 					"headerAction": "Append",
 					"headerName": "content-security-policy",
 					"value": $CSP
@@ -225,6 +228,7 @@ if [ "${1:-}" = 'publish' ]; then
 			"conditions": [{
 				"name": "RequestHeader",
 				"parameters": {
+					"typeName": "DeliveryRuleRequestHeaderConditionParameters",
 					"selector": "host",
 					"operator": "Equal",
 					"matchValues": ["arnavion.dev"],
@@ -233,6 +237,7 @@ if [ "${1:-}" = 'publish' ]; then
 			}, {
 				"name": "UrlPath",
 				"parameters": {
+					"typeName": "DeliveryRuleUrlPathMatchConditionParameters",
 					"operator": "BeginsWith",
 					"negateCondition": true,
 					"matchValues": ["/.well-known/"]
@@ -241,6 +246,7 @@ if [ "${1:-}" = 'publish' ]; then
 			"actions": [{
 				"name": "UrlRedirect",
 				"parameters": {
+					"typeName": "DeliveryRuleUrlRedirectActionParameters",
 					"customHostname": "www.arnavion.dev",
 					"destinationProtocol": "Https",
 					"redirectType": "PermanentRedirect"
@@ -252,6 +258,7 @@ if [ "${1:-}" = 'publish' ]; then
 			"conditions": [{
 				"name": "UrlPath",
 				"parameters": {
+					"typeName": "DeliveryRuleUrlPathMatchConditionParameters",
 					"operator": "Equal",
 					"matchValues": [
 						"/.well-known/matrix/client",
@@ -262,6 +269,7 @@ if [ "${1:-}" = 'publish' ]; then
 			"actions": [{
 				"name": "ModifyResponseHeader",
 				"parameters": {
+					"typeName": "DeliveryRuleHeaderActionParameters",
 					"headerAction": "Overwrite",
 					"headerName": "content-type",
 					"value": "application/json"
@@ -273,6 +281,7 @@ if [ "${1:-}" = 'publish' ]; then
 			"conditions": [{
 				"name": "UrlPath",
 				"parameters": {
+					"typeName": "DeliveryRuleUrlPathMatchConditionParameters",
 					"operator": "Equal",
 					"matchValues": ["/blog/index.xml"]
 				}
@@ -280,6 +289,7 @@ if [ "${1:-}" = 'publish' ]; then
 			"actions": [{
 				"name": "ModifyResponseHeader",
 				"parameters": {
+					"typeName": "DeliveryRuleHeaderActionParameters",
 					"headerAction": "Overwrite",
 					"headerName": "content-type",
 					"value": "application/atom+xml"
@@ -303,6 +313,7 @@ if [ "${1:-}" = 'publish' ]; then
 
 	az cdn endpoint update \
 		--resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" --profile-name "$AZURE_WWW_CDN_PROFILE_NAME" --name "$AZURE_WWW_CDN_ENDPOINT_NAME" \
+		--location "$AZURE_WWW_CDN_ENDPOINT_LOCATION" \
 		--set "deliveryPolicy.rules=$cdn_endpoint_delivery_policy_rules"
 
 	az cdn endpoint purge \
