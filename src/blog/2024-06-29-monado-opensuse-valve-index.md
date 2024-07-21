@@ -232,15 +232,19 @@ So now it's just a matter of wiring up the `monado.service` unit to run `monado-
 
 Apart from playing games, I was also interested in getting 180°/360° videos working.
 
-Since OpenVR never got standardized, browsers that implemented OpenVR via WebVR either removed it or never started implementing it. There is a corresponding WebXR that uses OpenXR, and Firefox does apparently support it on Linux while Chromium apparently does not. I tried Firefox originally before I switched from SteamVR to Monado, and that didn't work because apparently Firefox only works with Monado. I haven't tried since I switched to Monado.
+Since OpenVR never got standardized, browsers that implemented OpenVR via WebVR either removed it or plan to remove it or never started implementing it. There is a corresponding WebXR that uses OpenXR, but neither Firefox nor Chromium seem to support it on Linux, or at least I was not able to get any of the WebXR samples at [immersive-web.github.io](https://immersive-web.github.io/webxr-samples/) to work on either. [These third-party patches](https://github.com/mrxz/webxr-linux) apparently make them work but I didn't care to recompile browsers to try them.
 
 What did end up working is two desktop players.
 
-The first is [vr-video-player](https://git.dec05eba.com/vr-video-player) that uses SteamVR directly and thus works without Monado. It can either capture any X11 window, or it can play any file that mpv can play (since it uses libmpv). It has a bunch of CLI flags that allow it to show not just 180°/360° projections but also stereoscopic projection (ie where the application / video renders the two viewpoints side-by-side) and monocular projection on a curved or flat surface. Picking the right flags for a particular video requires some trial and error because I don't always find it obvious by looking at the video on a monitor what projection it uses. vr-video-player does have keyboard shortcuts to change some aspects of the projection, which I can blindly operate while wearing the headset. But changing the projection itself requires stopping and restarting vr-video-player with different CLI flags, so I have to keep taking my headset off and on to do it.
+The first is [vr-video-player](https://git.dec05eba.com/vr-video-player) that can use SteamVR directly and not need Monado, or use OpenOVR and forward to Monado. It can either capture any X11 window, or it can play any file that mpv can play (since it uses libmpv). It has a bunch of CLI flags that allow it to show not just 180°/360° projections but also stereoscopic projection (ie where the application / video renders the two viewpoints side-by-side) and monocular projection on a curved or flat surface. Picking the right flags for a particular video requires some trial and error because I don't always find it obvious by looking at the video on a monitor what projection it uses. vr-video-player does have keyboard shortcuts to change some aspects of the projection, which I can blindly operate while wearing the headset. But changing the projection itself requires stopping and restarting vr-video-player with different CLI flags, so I have to keep taking my headset off and on to do it.
 
-The second is [sphvr](https://gitlab.com/lubosz/sphvr) that uses OpenXR and thus requires Monado. It shows images and videos through gstreamer. Once I got Monado working, I tested this with simple images and it works. I have not tested this with video yet.
+The second is [sphvr](https://gitlab.com/lubosz/sphvr) that uses OpenXR and thus requires Monado. It shows images and videos through gstreamer. Once I got Monado working, I tested this with images and videos and it works.
 
-sphvr requires gulkan v0.16 and gxr v0.16, while the packages in OpenSUSE repos are still v0.15. (gulkan is in `X11:Wayland` and Factory. gxr is in `hardware:xr`.) I have the two v0.16 packages [here](https://build.opensuse.org/package/show/home:Arnavion/gulkan) and [here](https://build.opensuse.org/package/show/home:Arnavion/gxr) in my OBS repository. I've sr'd the gulkan update to `X11:Wayland` [here](https://build.opensuse.org/request/show/1182015), and it needs to be accepted and propagate to Factory before I can send the gxr sr to `hardware:xr` because gxr v0.16 requires gulkan v0.16.
+vr-video-player is not able to render all videos; sometimes it just renders a black screen and then locks up. I haven't yet debugged it to see why this happens, but it does seem to only happen with some videos and not others, so perhaps it's something related to the video format / codec. In these cases, there is the workaround of playing the video in regular `mpv` (with `$WAYLAND_DISPLAY` unset so that it renders an X11 window) and then using `vr-video-player $mpv_window_id` so that it captures and renders the `mpv` window instead. However this does have the downside that the playback is very choppy (~15fps).
+
+sphvr seems to be able to handle all videos including those that break vr-video-player, but it has the disadvantage that it has no keyboard controls for seeking the video and so on. vr-video-player has the advantage of using standard mpv keybinds.
+
+sphvr requires gulkan v0.16 and gxr v0.16, while the packages in OpenSUSE repos are still v0.15. (gulkan is in `X11:Wayland` and Factory. gxr is in `hardware:xr`.) I have the two v0.16 packages [here](https://build.opensuse.org/package/show/home:Arnavion/gulkan) and [here](https://build.opensuse.org/package/show/home:Arnavion/gxr) in my OBS repository. I've sr'd the gulkan update to `X11:Wayland` [here](https://build.opensuse.org/request/show/1182015), and it needs to be accepted and propagate to Factory before I can send the gxr sr to `hardware:xr` because gxr v0.16 requires gulkan v0.16. Unfortunately it seems the maintainer is MIA.
 
 Neither vr-video-player nor sphr themselves have any stable releases, so I'm not sure they can be packaged for OpenSUSE in a way that will be accepted by any of the official repos. For now I've packaged them [here](https://build.opensuse.org/package/show/home:Arnavion/vr-video-player) and [here](https://build.opensuse.org/package/show/home:Arnavion/sphvr) in my OBS repository.
 
@@ -259,6 +263,14 @@ vr-video-player --flat --no-stretch --eye-left-offset -0.5 --video 'av://v4l2:/d
 ```
 
 I've added this patch to my OBS package already. I'll submit it upstream later when I have time to clean up the patch for submission.
+
+sphvr can also render the v4l2 device via:
+
+```sh
+sphvr -o xr 'v4l2:///dev/video'
+```
+
+... and does not have the cross-eyed image issue.
 
 </section>
 
