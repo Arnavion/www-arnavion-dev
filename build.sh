@@ -196,6 +196,8 @@ if [ "${1:-}" = 'publish' ]; then
 			--query connectionString --output tsv
 	)"
 
+	AZURE_SUBSCRIPTION_ID="$(az account show --query id --output tsv)"
+
 	# Strip trailing newline to match the HTML output
 	css_sha256="$(<<< "$css" head -c -1 | openssl dgst -binary -sha256 | base64 -w 0)"
 
@@ -311,10 +313,9 @@ if [ "${1:-}" = 'publish' ]; then
 		--source "$PWD/out" --destination '$web' --type block \
 		--verbose
 
-	az cdn endpoint update \
-		--resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" --profile-name "$AZURE_WWW_CDN_PROFILE_NAME" --name "$AZURE_WWW_CDN_ENDPOINT_NAME" \
-		--location "$AZURE_WWW_CDN_ENDPOINT_LOCATION" \
-		--set "deliveryPolicy.rules=$cdn_endpoint_delivery_policy_rules"
+	az resource update \
+		--ids "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${AZURE_WWW_RESOURCE_GROUP_NAME}/providers/Microsoft.Cdn/profiles/${AZURE_WWW_CDN_PROFILE_NAME}/endpoints/${AZURE_WWW_CDN_ENDPOINT_NAME}" \
+		--set "properties.deliveryPolicy.rules=$cdn_endpoint_delivery_policy_rules"
 
 	az cdn endpoint purge \
 		--resource-group "$AZURE_WWW_RESOURCE_GROUP_NAME" --profile-name "$AZURE_WWW_CDN_PROFILE_NAME" --name "$AZURE_WWW_CDN_ENDPOINT_NAME" \
