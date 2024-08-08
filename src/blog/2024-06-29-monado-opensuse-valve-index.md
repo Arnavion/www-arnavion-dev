@@ -244,9 +244,7 @@ vr-video-player is not able to render all videos; sometimes it just renders a bl
 
 sphvr seems to be able to handle all videos including those that break vr-video-player, but it has the disadvantage that it has no keyboard controls for seeking the video and so on. vr-video-player has the advantage of using standard mpv keybinds.
 
-sphvr requires gulkan v0.16 and gxr v0.16, while the packages in OpenSUSE repos are still v0.15. (gulkan is in `X11:Wayland` and Factory. gxr is in `hardware:xr`.) I have the two v0.16 packages [here](https://build.opensuse.org/package/show/home:Arnavion/gulkan) and [here](https://build.opensuse.org/package/show/home:Arnavion/gxr) in my OBS repository. I've sr'd the gulkan update to `X11:Wayland` [here](https://build.opensuse.org/request/show/1182015), and it needs to be accepted and propagate to Factory before I can send the gxr sr to `hardware:xr` because gxr v0.16 requires gulkan v0.16. Unfortunately it seems the maintainer is MIA.
-
-Neither vr-video-player nor sphr themselves have any stable releases, so I'm not sure they can be packaged for OpenSUSE in a way that will be accepted by any of the official repos. For now I've packaged them [here](https://build.opensuse.org/package/show/home:Arnavion/vr-video-player) and [here](https://build.opensuse.org/package/show/home:Arnavion/sphvr) in my OBS repository.
+Neither vr-video-player nor sphr have any stable releases, so I'm not sure they can be packaged for OpenSUSE in a way that will be accepted by any of the official repos. For now I've packaged them [here](https://build.opensuse.org/package/show/home:Arnavion/vr-video-player) and [here](https://build.opensuse.org/package/show/home:Arnavion/sphvr) in my OBS repository. sphvr requires gulkan v0.16 and gxr v0.16. The packages in OpenSUSE repos were v0.15 so I sr'd v0.16 to them. gulkan is in `X11:Wayland` and gxr is in `hardware:xr`, so if you want to use the packages from my OBS repo, you'll need to add those repos too. (gulkan is in Factory too but so far the maintainer has not forwarded v0.16 to it.)
 
 </section>
 
