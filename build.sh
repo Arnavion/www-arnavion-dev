@@ -202,7 +202,7 @@ if [ "${1:-}" = 'publish' ]; then
 	css_sha256="$(<<< "$css" head -c -1 | openssl dgst -binary -sha256 | base64 -w 0)"
 
 	cdn_endpoint_delivery_policy_rules="$(jq --null-input --compact-output \
-		--arg CSP "default-src 'none'; style-src 'sha256-$css_sha256'" \
+		--arg CSP "default-src 'none'; media-src 'self'; style-src 'sha256-$css_sha256'" \
 		'[{
 			"order": 0,
 			"name": "Global",
